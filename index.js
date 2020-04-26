@@ -86,12 +86,13 @@ async function globalGetForms({appUrl, userCookie}){
 		throw new Error("userCookie is not defined");
 	}
 
-	const {forms} = await axios.get(appUrl + `rest/forms`, {
+	const {"data":{forms}} = await axios.get(appUrl + `rest/forms`, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
 		}
 	});
+
 	return forms;
 }
 
@@ -102,7 +103,7 @@ async function globalGetVises({appUrl, userCookie}){
 		throw new Error("userCookie is not defined");
 	}
 
-	const vises = await axios.get(appUrl + `rest/vis`, {
+	const {"data":vises} = await axios.get(appUrl + `rest/vis`, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
@@ -118,7 +119,7 @@ async function globalGetUMLSchema({appUrl, userCookie}){
 		throw new Error("userCookie is not defined");
 	}
 
-	const UMLSchema = await axios.get(appUrl + `rest/entityspec`, {
+	const {"data": UMLSchema} = await axios.get(appUrl + `rest/entityspec`, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
