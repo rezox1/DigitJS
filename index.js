@@ -79,6 +79,54 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	return searchResult.data;
 }
 
+async function globalGetForms({appUrl, userCookie}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	}
+
+	const {forms} = await axios.get(appUrl + `rest/forms`, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return forms;
+}
+
+async function globalGetVises({appUrl, userCookie}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	}
+
+	const vises = await axios.get(appUrl + `rest/vis`, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return vises;
+}
+
+async function globalGetUMLSchema({appUrl, userCookie}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	}
+
+	const UMLSchema = await axios.get(appUrl + `rest/entityspec`, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return UMLSchema;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -188,6 +236,27 @@ function DigitApp({appUrl, username, password}){
 			appUrl: appUrl,
 			userCookie, 
 			deleteObjectIds
+		});
+	}
+	this.getForms = async function getForms(){
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetForms({
+			appUrl: appUrl,
+			userCookie
+		});
+	}
+	this.getVises = async function getVises(){
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetVises({
+			appUrl: appUrl,
+			userCookie
+		});
+	}
+	this.getUMLSchema = async function getUMLSchema(){
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetUMLSchema({
+			appUrl: appUrl,
+			userCookie
 		});
 	}
 }
