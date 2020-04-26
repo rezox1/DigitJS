@@ -128,6 +128,42 @@ async function globalGetUMLSchema({appUrl, userCookie}){
 	return UMLSchema;
 }
 
+async function globalGetFormData({appUrl, userCookie, formObjectId}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!formObjectId) {
+		throw new Error("formObjectId is not defined");
+	}
+
+	const {"data": formData} = await axios.get(appUrl + `rest/form/` + formObjectId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return formData;
+}
+
+async function globalGetVisData({appUrl, userCookie, visObjectId}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!visObjectId) {
+		throw new Error("visObjectId is not defined");
+	}
+
+	const {"data": visData} = await axios.get(appUrl + `rest/vis/` + visObjectId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return visData;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -258,6 +294,22 @@ function DigitApp({appUrl, username, password}){
 		return await globalGetUMLSchema({
 			appUrl: appUrl,
 			userCookie
+		});
+	}
+	this.getFormData = async function getFormData(formObjectId){
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetFormData({
+			appUrl: appUrl,
+			userCookie,
+			formObjectId
+		});
+	}
+	this.getVisData = async function getVisData(visObjectId){
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetVisData({
+			appUrl: appUrl,
+			userCookie,
+			visObjectId
 		});
 	}
 }
