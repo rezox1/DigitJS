@@ -1,0 +1,15 @@
+{
+  "name": "digitjs",
+  "version": "1.0.0",
+  "description": "JS library for communicating with Digit Platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "rezox",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "uuid": "^7.0.3"
+  }
+}
