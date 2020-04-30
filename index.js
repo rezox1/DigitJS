@@ -1,6 +1,20 @@
 const getGuid = require('uuid/v4');
 const axios = require('axios');
 
+class TotallyFrozenObject {
+    constructor(objectForFreeze) {
+        return new Proxy(Object.freeze(objectForFreeze), {
+            get (target, property) {
+                if (property in target) {
+                    return target[property];
+                } else {
+                    throw new ReferenceError(property + " is not defined");
+                }
+            }
+        });
+    }
+}
+
 async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 	if (!userCookie) {
 		throw new Error("userCookie is not defined");
@@ -251,6 +265,14 @@ function DigitApp({appUrl, username, password}){
 		});
 	}
 
+	this.FORM_ELEMENT_TYPES = new TotallyFrozenObject({
+        //группа полей
+        "FIELD_GROUP": "FormFieldset",
+        //ссылка
+        "LINK": "FormLink",
+        //таблица
+        "TABLE": "FormGrid"
+    });
 	this.createObject = async function createObject(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalCreateObject({
