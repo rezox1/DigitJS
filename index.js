@@ -15,6 +15,15 @@ class TotallyFrozenObject {
     }
 }
 
+class AuthError extends Error {
+	constructor(...params) {
+		// Pass remaining arguments (including vendor specific ones) to parent constructor
+    	super(...params);
+    	Error.captureStackTrace(this, AuthError);
+    	this.name = this.constructor.name;
+    }
+}
+
 async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 	if (!userCookie) {
 		throw new Error("userCookie is not defined");
@@ -203,11 +212,22 @@ async function globalLogin({appUrl, username, password}) {
 		throw new Error("password is not defined");
 	}
 
-	let loginData = await axios.post(appUrl + `rest/login`, {username, password}, {
-		headers: {
-			"Content-Type": "application/json;charset=UTF-8"
+	let loginData;
+	try {
+		let loginData = await axios.post(appUrl + `rest/login`, {username, password}, {
+			headers: {
+				"Content-Type": "application/json;charset=UTF-8"
+			}
+		});
+	} catch (err) {
+		let responseStatus = err.response.status;
+		if (responseStatus === "401") {
+			throw new AuthError("Username or password is incorrect");
+		} else {
+			throw err;
 		}
-	});
+	}
+	
 	let RawUserCookie = loginData.headers["set-cookie"][0],
 		UserCookie = RawUserCookie.substring(0, RawUserCookie.indexOf(";"));
 
