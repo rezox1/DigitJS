@@ -126,6 +126,22 @@ async function globalGetVises({appUrl, userCookie}){
 	return vises;
 }
 
+async function globalGetWorkflows({appUrl, userCookie}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	}
+
+	const {"data":{workflows}} = await axios.get(appUrl + `rest/workflow`, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return workflows;
+}
+
 async function globalGetUMLSchema({appUrl, userCookie}){
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -273,7 +289,7 @@ function DigitApp({appUrl, username, password}){
         //таблица
         "TABLE": "FormGrid"
     });
-	this.createObject = async function createObject(newObjectData) {
+	this.createObject = async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalCreateObject({
 			appUrl: appUrl,
@@ -281,7 +297,7 @@ function DigitApp({appUrl, username, password}){
 			newObjectData
 		});
 	}
-	this.getObjects = async function getObjects(searchParameters) {
+	this.getObjects = async function(searchParameters) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetObjects({
 			appUrl: appUrl,
@@ -289,7 +305,7 @@ function DigitApp({appUrl, username, password}){
 			searchParameters
 		});
 	}
-	this.deleteObjects = async function deleteObjects(deleteObjectIds) {
+	this.deleteObjects = async function(deleteObjectIds) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalDeleteObjects({
 			appUrl: appUrl,
@@ -297,28 +313,35 @@ function DigitApp({appUrl, username, password}){
 			deleteObjectIds
 		});
 	}
-	this.getForms = async function getForms(){
+	this.getForms = async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetForms({
 			appUrl: appUrl,
 			userCookie
 		});
 	}
-	this.getVises = async function getVises(){
+	this.getVises = async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetVises({
 			appUrl: appUrl,
 			userCookie
 		});
 	}
-	this.getUMLSchema = async function getUMLSchema(){
+	this.getWorkflows = async function() {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetWorkflows({
+			appUrl: appUrl,
+			userCookie
+		});
+	}
+	this.getUMLSchema = async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetUMLSchema({
 			appUrl: appUrl,
 			userCookie
 		});
 	}
-	this.getFormData = async function getFormData(formObjectId){
+	this.getFormData = async function(formObjectId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetFormData({
 			appUrl: appUrl,
@@ -326,7 +349,7 @@ function DigitApp({appUrl, username, password}){
 			formObjectId
 		});
 	}
-	this.getVisData = async function getVisData(visObjectId){
+	this.getVisData = async function(visObjectId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetVisData({
 			appUrl: appUrl,
