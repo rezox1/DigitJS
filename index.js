@@ -18,10 +18,10 @@ class TotallyFrozenObject {
 class AuthError extends Error {
 	constructor(...params) {
 		// Pass remaining arguments (including vendor specific ones) to parent constructor
-    	super(...params);
-    	Error.captureStackTrace(this, AuthError);
-    	this.name = this.constructor.name;
-    }
+		super(...params);
+		Error.captureStackTrace(this, AuthError);
+		this.name = this.constructor.name;
+	}
 }
 
 async function globalCreateObject({appUrl, userCookie, newObjectData}) {
