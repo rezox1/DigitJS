@@ -16,11 +16,16 @@ class TotallyFrozenObject {
 }
 
 class AuthError extends Error {
-	constructor(...params) {
+	constructor(message) {
 		// Pass remaining arguments (including vendor specific ones) to parent constructor
-		super(...params);
-		Error.captureStackTrace(this, AuthError);
-		this.name = this.constructor.name;
+		super(message);
+		Object.defineProperty(this, 'name', {
+			enumerable: false,
+			configurable: false,
+			writable: true,
+			value: this.constructor.name
+		});
+		Error.captureStackTrace(this, this.constructor);
 	}
 }
 
