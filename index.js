@@ -219,7 +219,7 @@ async function globalLogin({appUrl, username, password}) {
 
 	let loginData;
 	try {
-		let loginData = await axios.post(appUrl + `rest/login`, {username, password}, {
+		loginData = await axios.post(appUrl + `rest/login`, {username, password}, {
 			headers: {
 				"Content-Type": "application/json;charset=UTF-8"
 			}
