@@ -208,6 +208,26 @@ async function globalGetVisData({appUrl, userCookie, visObjectId}){
 	return visData;
 }
 
+async function globalCustomPost({appUrl, userCookie, path, requestData}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!path) {
+		throw new Error("path is not defined");
+	} else if (!requestData) {
+		throw new Error("requestData is not defined");
+	}
+
+	const {"data": responseData} = await axios.post(appUrl + path, requestData, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		}
+	});
+	return responseData;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -380,6 +400,15 @@ function DigitApp({appUrl, username, password}){
 			appUrl: appUrl,
 			userCookie,
 			visObjectId
+		});
+	}
+	this.customPost = async function(path, requestData) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalCustomPost({
+			appUrl: appUrl,
+			userCookie,
+			path,
+			requestData
 		});
 	}
 }
