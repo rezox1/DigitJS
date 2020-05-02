@@ -1,4 +1,4 @@
-const getGuid = require('uuid/v4');
+const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 
 class TotallyFrozenObject {
