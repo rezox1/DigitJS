@@ -1,6 +1,8 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 
+const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET"];
+
 class TotallyFrozenObject {
     constructor(objectForFreeze) {
         return new Proxy(Object.freeze(objectForFreeze), {
@@ -308,8 +310,10 @@ async function globalCheckCookie({appUrl, userCookie}) {
 			} else {
 				console.error(err);
 			}
-		} else if (["ECONNABORTED", "ECONNRESET"].includes(err.code)) {
+		} else if (CONNECTION_ERROR_CODES.includes(err.code)) {
 			console.warn("There are connection troubles...");
+
+			return await globalCheckCookie.apply(this, arguments);
 		} else {
 			console.error(err);
 		}
