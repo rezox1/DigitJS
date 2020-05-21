@@ -308,6 +308,8 @@ async function globalCheckCookie({appUrl, userCookie}) {
 			} else {
 				console.error(err);
 			}
+		} else if (["ECONNABORTED", "ECONNRESET"].includes(err.code)) {
+			console.warn("There are connection troubles...");
 		} else {
 			console.error(err);
 		}
