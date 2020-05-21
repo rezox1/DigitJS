@@ -128,7 +128,6 @@ async function globalGetForms({appUrl, userCookie}){
 		//60 seconds
 		timeout: 60000
 	});
-
 	return forms;
 }
 
@@ -267,15 +266,19 @@ async function globalLogin({appUrl, username, password}) {
 			timeout: 10000
 		});
 	} catch (err) {
-		let responseStatus = err.response.status;
-		if (responseStatus === "401") {
-			throw new AuthError("Username or password is incorrect");
+		if (err.response) {
+			let responseStatus = err.response.status;
+			if (responseStatus === "401") {
+				throw new AuthError("Username or password is incorrect");
+			} else {
+				throw err;
+			}
 		} else {
 			throw err;
 		}
 	}
 	
-	let RawUserCookie = loginData.headers["set-cookie"][0],
+	let [RawUserCookie] = loginData.headers["set-cookie"],
 		UserCookie = RawUserCookie.substring(0, RawUserCookie.indexOf(";"));
 
 	return UserCookie;
@@ -298,9 +301,13 @@ async function globalCheckCookie({appUrl, userCookie}) {
 			timeout: 10000
 		});
 	} catch (err) {
-		let responseStatus = err.response.status;
-		if (responseStatus === "404") {
-			logger.warn("User cookie is not valid");
+		if (err.response) {
+			let responseStatus = err.response.status;
+			if (responseStatus === "404") {
+				logger.warn("User cookie is not valid");
+			} else {
+				console.error(err);
+			}
 		} else {
 			console.error(err);
 		}
