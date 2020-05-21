@@ -304,7 +304,7 @@ async function globalCheckCookie({appUrl, userCookie}) {
 		if (err.response) {
 			let responseStatus = err.response.status;
 			if (responseStatus === "404") {
-				logger.warn("User cookie is not valid");
+				console.warn("User cookie is not valid");
 			} else {
 				console.error(err);
 			}
@@ -336,7 +336,7 @@ function globalCookieManager({loginFunction, checkCookieFunction}){
 			if (checkCookieResult === true) {
 				return cookie;
 			} else {
-				logger.info("Trying to get new user cookie...");
+				console.log("Trying to get new user cookie...");
 				
 				return await refreshCookie();
 			}
