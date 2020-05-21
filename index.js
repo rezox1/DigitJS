@@ -45,7 +45,9 @@ async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//30 seconds
+		timeout: 30000
 	});
 }
 
@@ -60,7 +62,9 @@ async function globalDeleteObjects({appUrl, userCookie, deleteObjectIds}) {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//10 minutes
+		timeout: 600000
 	});
 }
 
@@ -102,7 +106,9 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//60 seconds
+		timeout: 60000
 	});
 	return searchResult.data;
 }
@@ -118,7 +124,9 @@ async function globalGetForms({appUrl, userCookie}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//60 seconds
+		timeout: 60000
 	});
 
 	return forms;
@@ -135,7 +143,9 @@ async function globalGetVises({appUrl, userCookie}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//30 seconds
+		timeout: 30000
 	});
 	return vises;
 }
@@ -151,7 +161,9 @@ async function globalGetWorkflows({appUrl, userCookie}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//30 seconds
+		timeout: 30000
 	});
 	return workflows;
 }
@@ -167,7 +179,9 @@ async function globalGetUMLSchema({appUrl, userCookie}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//5 minutes
+		timeout: 300000
 	});
 	return UMLSchema;
 }
@@ -185,7 +199,9 @@ async function globalGetFormData({appUrl, userCookie, formObjectId}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//30 seconds
+		timeout: 30000
 	});
 	return formData;
 }
@@ -203,7 +219,9 @@ async function globalGetVisData({appUrl, userCookie, visObjectId}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//30 seconds
+		timeout: 30000
 	});
 	return visData;
 }
@@ -223,7 +241,9 @@ async function globalCustomPost({appUrl, userCookie, path, requestData}){
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
-		}
+		},
+		//60 seconds
+		timeout: 60000
 	});
 	return responseData;
 }
@@ -242,7 +262,9 @@ async function globalLogin({appUrl, username, password}) {
 		loginData = await axios.post(appUrl + `rest/login`, {username, password}, {
 			headers: {
 				"Content-Type": "application/json;charset=UTF-8"
-			}
+			},
+			//10 seconds
+			timeout: 10000
 		});
 	} catch (err) {
 		let responseStatus = err.response.status;
@@ -271,7 +293,9 @@ async function globalCheckCookie({appUrl, userCookie}) {
 		await axios.head(appUrl + `rest/profile`, {
 			headers: {
 				"Cookie": userCookie
-			}
+			},
+			//10 seconds
+			timeout: 10000
 		});
 	} catch (err) {
 		let responseStatus = err.response.status;
