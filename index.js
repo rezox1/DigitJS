@@ -249,6 +249,46 @@ async function globalCustomPost({appUrl, userCookie, path, requestData}){
 	return responseData;
 }
 
+async function globalSyncEntity({appUrl, userCookie, entityId}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!entityId) {
+		throw new Error("entityId is not defined");
+	}
+
+	const {"data": transactionId} = await axios.get(appUrl + `rest/umlsync/updateEntity/` + entityId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//30 seconds
+		timeout: 30000
+	});
+	return transactionId;
+}
+
+async function globalGetTransactionData({appUrl, userCookie, transactionId}){
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!transactionId) {
+		throw new Error("transactionId is not defined");
+	}
+
+	const {"data": transactionData} = await axios.get(appUrl + `rest/transactions/status/` + transactionId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//10 seconds
+		timeout: 10000
+	});
+	return transactionData;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -453,6 +493,22 @@ function DigitApp({appUrl, username, password}){
 			userCookie,
 			path,
 			requestData
+		});
+	}
+	this.syncEntity = async function(entityId) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalSyncEntity({
+			appUrl: appUrl,
+			userCookie,
+			entityId
+		});
+	}
+	this.getTransactionData = async function(transactionId) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetTransactionData({
+			appUrl: appUrl,
+			userCookie,
+			transactionId
 		});
 	}
 }
