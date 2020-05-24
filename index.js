@@ -1,7 +1,7 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 
-const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET"];
+const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
 
 class TotallyFrozenObject {
     constructor(objectForFreeze) {
