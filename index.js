@@ -83,6 +83,10 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 		throw new Error("searchParameters.attributes is not Array");
 	} else if (!searchParameters.limit) {
 		throw new Error("searchParameters.limit is not defined");
+	} else if (typeof searchParameters.sortAsc !== "undefined") {
+		if (typeof searchParameters.sortAsc !== "boolean") {
+			throw new Error("type of searchParameters.sortAsc is not boolean");
+		}
 	}
 
 	let searchObject = {};
@@ -104,6 +108,11 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	} else {
 		searchObject.bindType = "entity";
 	}
+	if (searchParameters.sort) {
+		searchObject.sort = searchParameters.sort;
+		searchObject.sortAsc = searchParameters.sortAsc || false;
+	}
+	
 	let searchResult = await axios.post(appUrl + `rest/data/entity/`, searchObject, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
