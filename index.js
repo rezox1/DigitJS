@@ -43,13 +43,11 @@ async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 	}
 
 	let newObjId = getGuid();
-	await axios.post(appUrl + `rest/data/entity/` + newObjId, newObjectData, {
-		headers: {
-			"Content-Type": "application/json;charset=UTF-8",
-			"Cookie": userCookie
-		},
-		//30 seconds
-		timeout: 30000
+	await globalSaveObject({
+		"appUrl": appUrl,
+		"userCookie": userCookie,
+		"objectId": newObjId,
+		"objectData": newObjectData
 	});
 }
 
@@ -147,7 +145,7 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	return searchResult.data;
 }
 
-async function globalGetForms({appUrl, userCookie}){
+async function globalGetForms({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -165,7 +163,7 @@ async function globalGetForms({appUrl, userCookie}){
 	return forms;
 }
 
-async function globalGetVises({appUrl, userCookie}){
+async function globalGetVises({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -183,7 +181,7 @@ async function globalGetVises({appUrl, userCookie}){
 	return vises;
 }
 
-async function globalGetWorkflows({appUrl, userCookie}){
+async function globalGetWorkflows({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -201,7 +199,7 @@ async function globalGetWorkflows({appUrl, userCookie}){
 	return workflows;
 }
 
-async function globalGetUMLSchema({appUrl, userCookie}){
+async function globalGetUMLSchema({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -219,7 +217,7 @@ async function globalGetUMLSchema({appUrl, userCookie}){
 	return UMLSchema;
 }
 
-async function globalGetFormData({appUrl, userCookie, formObjectId}){
+async function globalGetFormData({appUrl, userCookie, formObjectId}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -239,7 +237,7 @@ async function globalGetFormData({appUrl, userCookie, formObjectId}){
 	return formData;
 }
 
-async function globalGetVisData({appUrl, userCookie, visObjectId}){
+async function globalGetVisData({appUrl, userCookie, visObjectId}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -257,6 +255,96 @@ async function globalGetVisData({appUrl, userCookie, visObjectId}){
 		timeout: 30000
 	});
 	return visData;
+}
+
+async function globalSyncEntity({appUrl, userCookie, entityId}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!entityId) {
+		throw new Error("entityId is not defined");
+	}
+
+	const {"data": transactionId} = await axios.get(appUrl + `rest/umlsync/updateEntity/` + entityId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//30 seconds
+		timeout: 30000
+	});
+	return transactionId;
+}
+
+async function globalGetTransactionData({appUrl, userCookie, transactionId}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!transactionId) {
+		throw new Error("transactionId is not defined");
+	}
+
+	const {"data": transactionData} = await axios.get(appUrl + `rest/transactions/status/` + transactionId, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//10 seconds
+		timeout: 10000
+	});
+	return transactionData;
+}
+
+async function globalCreateForm({appUrl, userCookie, formData}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!formData) {
+		throw new Error("formData is not defined");
+	}
+
+	let newFormObjId = getGuid();
+	await globalSaveForm({
+		"appUrl": appUrl,
+		"userCookie": userCookie,
+		"formObjectId": newFormObjId,
+		"formData": formData
+	});
+}
+
+async function globalSaveForm({appUrl, userCookie, formObjectId, formData}) {
+	async function getFormsVersion() {
+		const {"baseVersion": formsVersion} = await axios.get(appUrl + `rest/forms`, {
+			headers: {
+				"Content-Type": "application/json;charset=UTF-8",
+				"Cookie": userCookie
+			},
+			//60 seconds
+			timeout: 60000
+		});
+		return formsVersion;
+	}
+
+	let formsVersion = await getFormsVersion();
+	await axios.post(appUrl + "rest/formbuilder/update", {
+		"baseVersion": formsVersion,
+		"changes": [{
+			"changeType": "UPDATE",
+			"objectId": formObjectId,
+			"objectType": "Form",
+			"form": formData
+		}]
+	}, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
 }
 
 async function globalCustomPost({appUrl, userCookie, path, requestData}){
@@ -279,46 +367,6 @@ async function globalCustomPost({appUrl, userCookie, path, requestData}){
 		timeout: 60000
 	});
 	return responseData;
-}
-
-async function globalSyncEntity({appUrl, userCookie, entityId}){
-	if (!appUrl) {
-		throw new Error("appUrl is not defined");
-	} else if (!userCookie) {
-		throw new Error("userCookie is not defined");
-	} else if (!entityId) {
-		throw new Error("entityId is not defined");
-	}
-
-	const {"data": transactionId} = await axios.get(appUrl + `rest/umlsync/updateEntity/` + entityId, {
-		headers: {
-			"Content-Type": "application/json;charset=UTF-8",
-			"Cookie": userCookie
-		},
-		//30 seconds
-		timeout: 30000
-	});
-	return transactionId;
-}
-
-async function globalGetTransactionData({appUrl, userCookie, transactionId}){
-	if (!appUrl) {
-		throw new Error("appUrl is not defined");
-	} else if (!userCookie) {
-		throw new Error("userCookie is not defined");
-	} else if (!transactionId) {
-		throw new Error("transactionId is not defined");
-	}
-
-	const {"data": transactionData} = await axios.get(appUrl + `rest/transactions/status/` + transactionId, {
-		headers: {
-			"Content-Type": "application/json;charset=UTF-8",
-			"Cookie": userCookie
-		},
-		//10 seconds
-		timeout: 10000
-	});
-	return transactionData;
 }
 
 async function globalLogin({appUrl, username, password}) {
@@ -527,15 +575,6 @@ function DigitApp({appUrl, username, password}){
 			visObjectId
 		});
 	}
-	this.customPost = async function(path, requestData) {
-		const userCookie = await CookieManager.getActualCookie();
-		return await globalCustomPost({
-			appUrl: appUrl,
-			userCookie,
-			path,
-			requestData
-		});
-	}
 	this.syncEntity = async function(entityId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalSyncEntity({
@@ -550,6 +589,32 @@ function DigitApp({appUrl, username, password}){
 			appUrl: appUrl,
 			userCookie,
 			transactionId
+		});
+	}
+	this.createForm = async function(formData) {
+		const userCookie = await CookieManager.getActualCookie();
+		await globalCreateForm({
+			appUrl: appUrl,
+			userCookie,
+			formData
+		});
+	}
+	this.saveForm = async function(formObjectId, formData) {
+		const userCookie = await CookieManager.getActualCookie();
+		await globalSaveForm({
+			appUrl: appUrl,
+			userCookie,
+			formObjectId,
+			formData
+		});
+	}
+	this.customPost = async function(path, requestData) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalCustomPost({
+			appUrl: appUrl,
+			userCookie,
+			path,
+			requestData
 		});
 	}
 }
