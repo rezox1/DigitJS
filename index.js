@@ -496,7 +496,23 @@ function DigitApp({appUrl, username, password}){
         //ссылка
         "LINK": "FormLink",
         //таблица
-        "TABLE": "FormGrid"
+        "TABLE": "FormGrid",
+        //текстовое поле
+        "INPUT": "FormInput",
+        //текстовая форма
+        "TEXT_AREA": "FormTextarea",
+        //файловое поле
+        "FILE_FIELD": "FormFilefield",
+        //поле даты
+        "DATE": "FormDate",
+        //поле даты и время
+        "DATETIME": "FormDatetime",
+        //радио
+        "RADIO": "FormRadio",
+        //флажок
+        "CHECKBOX": "FormCheckbox",
+        //элемент адрес
+        "ADDRESS": "FormAddress"
     });
 	this.createObject = async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
