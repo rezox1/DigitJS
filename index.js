@@ -517,7 +517,7 @@ function DigitApp({appUrl, username, password}){
     });
 	this.createObject = async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
-		await globalCreateObject({
+		return await globalCreateObject({
 			appUrl: appUrl,
 			userCookie, 
 			newObjectData
