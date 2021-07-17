@@ -49,6 +49,7 @@ async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 		"objectId": newObjId,
 		"objectData": newObjectData
 	});
+	return newObjId;
 }
 
 async function globalSaveObject({appUrl, userCookie, objectId, objectData}) {
