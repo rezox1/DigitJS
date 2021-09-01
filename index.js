@@ -108,7 +108,7 @@ async function globalGetObject({appUrl, userCookie, objectId, attributesToGet}) 
 		requestURL += "?attributes=" + attributesToGet.join(",");
 	}
 
-	let objectData = await axios.get(requestURL, {
+	let response = await axios.get(requestURL, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
@@ -117,7 +117,7 @@ async function globalGetObject({appUrl, userCookie, objectId, attributesToGet}) 
 		timeout: 60000
 	});
 
-	return objectData;
+	return response.data;
 }
 
 async function globalGetObjects({appUrl, userCookie, searchParameters}) {
