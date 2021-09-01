@@ -105,7 +105,7 @@ async function globalGetObject({appUrl, userCookie, objectId, attributesToGet}) 
 
 	let requestURL = appUrl + `rest/data/entity/` + objectId;
 	if (attributesToGet && attributesToGet.length > 0) {
-		requestURL += attributesToGet.join(",");
+		requestURL += "?attributes=" + attributesToGet.join(",");
 	}
 
 	let objectData = await axios.get(requestURL, {
