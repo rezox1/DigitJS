@@ -92,6 +92,34 @@ async function globalDeleteObjects({appUrl, userCookie, deleteObjectIds}) {
 	});
 }
 
+async function globalGetObject({appUrl, userCookie, objectId, attributesToGet}) {
+	if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!objectId) {
+		throw new Error("objectId is not defined");
+	} else if (attributesToGet && !Array.isArray(attributesToGet)) {
+		throw new Error("attributesToGet is not array");
+	}
+
+	let requestURL = appUrl + `rest/data/entity/` + objectId;
+	if (attributesToGet && attributesToGet.length > 0) {
+		requestURL += "?attributes=" + attributesToGet.join(",");
+	}
+
+	let objectData = await axios.get(requestURL, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+
+	return objectData;
+}
+
 async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	if (!userCookie) {
 		throw new Error("userCookie is not defined");
@@ -530,6 +558,15 @@ function DigitApp({appUrl, username, password}){
 			userCookie,
 			objectId,
 			objectData
+		});
+	}
+	this.getObject = async function(objectId, attributesToGet) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetObject({
+			appUrl: appUrl,
+			userCookie,
+			objectId,
+			attributesToGet
 		});
 	}
 	this.getObjects = async function(searchParameters) {
