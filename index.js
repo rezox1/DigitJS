@@ -520,29 +520,29 @@ function DigitApp({appUrl, username, password}){
 	}
 
 	this.FORM_ELEMENT_TYPES = new TotallyFrozenObject({
-        //группа полей
-        "FIELD_GROUP": "FormFieldset",
-        //ссылка
-        "LINK": "FormLink",
-        //таблица
-        "TABLE": "FormGrid",
-        //текстовое поле
-        "INPUT": "FormInput",
-        //текстовая форма
-        "TEXT_AREA": "FormTextarea",
-        //файловое поле
-        "FILE_FIELD": "FormFilefield",
-        //поле даты
-        "DATE": "FormDate",
-        //поле даты и время
-        "DATETIME": "FormDatetime",
-        //радио
-        "RADIO": "FormRadio",
-        //флажок
-        "CHECKBOX": "FormCheckbox",
-        //элемент адрес
-        "ADDRESS": "FormAddress"
-    });
+		//группа полей
+		"FIELD_GROUP": "FormFieldset",
+		//ссылка
+		"LINK": "FormLink",
+		//таблица
+ 		"TABLE": "FormGrid",
+		//текстовое поле
+		"INPUT": "FormInput",
+		//текстовая форма
+		"TEXT_AREA": "FormTextarea",
+		//файловое поле
+		"FILE_FIELD": "FormFilefield",
+		//поле даты
+		"DATE": "FormDate",
+		//поле даты и время
+		"DATETIME": "FormDatetime",
+		//радио
+		"RADIO": "FormRadio",
+		//флажок
+		"CHECKBOX": "FormCheckbox",
+		//элемент адрес
+		"ADDRESS": "FormAddress"
+	});
 	this.createObject = async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalCreateObject({
