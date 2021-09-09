@@ -543,6 +543,15 @@ function DigitApp({appUrl, username, password}){
 		//элемент адрес
 		"ADDRESS": "FormAddress"
 	});
+
+	this.ENTITIES = new TotallyFrozenObject({
+		//пользователь
+		"USER": {
+			"fullName": "UserMetadata.User",
+			"entityId": "e333d3ed-3ce3-fab3-33b3-b3fc3b3dd3a3"
+		}
+	});
+
 	this.createObject = async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalCreateObject({
