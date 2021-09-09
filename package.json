@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.2",
-    "uuid": "^7.0.3"
+    "uuid": "^7.0.3",
+    "ws": "^8.2.2"
   }
 }

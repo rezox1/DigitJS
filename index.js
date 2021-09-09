@@ -1,5 +1,6 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
+const {WebSocket} = require("ws");
 
 const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
 
@@ -500,24 +501,326 @@ function globalCookieManager({loginFunction, checkCookieFunction}){
 	this.refreshCookie = refreshCookie;
 }
 
-function DigitApp({appUrl, username, password}){
-	const CookieManager = new globalCookieManager({
-		"loginFunction": login, 
-		"checkCookieFunction": checkCookie
+function globalSocketManager({getCookieFunction, appUrl}) {
+	const socket = {
+		"startPingPong": () => {
+			const sendPing = () => {
+				if (this.connected) {
+					console.log('[Digit websocket] pingPong: ping');
+
+					this.emit({
+						action: "PING"
+					});
+				}
+			}
+
+			if (this.pingPongInt) {
+				return;
+			}
+
+			console.log('[Digit websocket] start pingPong');
+
+			this.pingPongInt = setInterval(sendPing, this.PING_PONG_TIMEOUT);
+		},
+		"stopPingPong": () => {
+			console.log('[Digit websocket] stop pingPong');
+
+			if (this.pingPongInt) {
+				clearInterval(this.pingPongInt);
+				this.pingPongInt = null;
+			}
+		},
+		"registerSubscribe": async (subscribeName, cb, createdCb) => {
+			if (!subscribeName) {
+				throw new Error("subscribeName is not defined");
+			} else if (!cb) {
+				throw new Error("cb is not defined");
+			}
+
+			if (this.subscribes.size === 0) {
+				await this.connect();
+			}
+
+			let subscribe = this.subscribes.get(subscribeName);
+			if (subscribe) {
+				subscribe.cb.push(cb);
+
+				if (createdCb) {
+					createdCb();
+				}
+			} else {
+				this.emit({
+					action: "REGISTRATION",
+					names: [subscribeName]
+				});
+
+				this.subscribes.set(subscribeName, {
+					"cb": [cb],
+					"createdCb": createdCb
+				});
+			}
+		},
+		"resubscribe": () => {
+			this.receivers.clear();
+
+			for (let [subscribeName] of subscribes) {
+				// retry registration
+				this.emit({
+					action: "REGISTRATION",
+					names: [subscribeName]
+				});
+			}
+		},
+		"unregisterSubscribe": async (subscribeName) => {
+			if (!subscribeName) {
+				throw new Error("subscribeName is not defined");
+			}
+
+			this.emit({
+				action: "UNREGISTRATION",
+				names: [subscribeName]
+			});
+
+			let subscribe = subscribes.get(subscribeName);
+			if (subscribe) {
+				let subscribeId = subscribe.id;
+
+				receivers.delete(subscribeId);
+				subscribes.delete(subscribeName);
+			}
+
+			if (this.subscribes.size === 0) {
+				await this.disconnect();
+			}
+		},
+		"connect": async () => {
+			function sleep(ms) {
+				return new Promise(resolve => setTimeout(resolve, ms));
+			}
+
+			const CONNECT_TIMEOUT = 10000;
+
+			const parsedUrl = new URL(appUrl);
+
+			let protocol, host = parsedUrl.host;
+			if (parsedUrl.protocol === 'https:') {
+				protocol = "wss://";
+			} else {
+				protocol = "ws://";
+			}
+
+			let websocketConnectionUrl = protocol + host + "/websocket/";
+
+			const cookie = getCookieFunction();
+
+			const socketConnection = new WebSocket(websocketConnectionUrl);
+
+			socketConnection.onopen = () => {
+				console.log('[Digit websocket] connection established');
+
+				this.connected = true;
+
+				this.startPingPong();
+
+				this.resubscribe();
+			}
+
+			socketConnection.onclose = (code, reason) => {
+				console.log("[Digit websocket] DISCONNECT");
+				console.log(code, reason);
+
+				this.connected = false;
+
+				this.stopPingPong();
+			}
+
+			socketConnection.onmessage = (event) => {
+				let eventData = event.data;
+
+				console.log("[Digit websocket] < : " + eventData);
+
+				this.onmessage(eventData);
+			}
+
+			socketConnection.onerror = (error) => {
+				console.error("[Digit websocket] ERROR: " + error);
+
+				this.stopPingPong();
+			}
+
+			this.socketConnection = socketConnection;
+
+			for (let i = 0; i < CONNECT_TIMEOUT;) {
+				let checkInterval = 200;
+				if (this.connected) {
+					break;
+				} else {
+					await sleep(checkInterval);
+					i += checkInterval;
+				}
+			}
+
+			if (!this.connected) {
+				throw new Error("Connetion not established until timeout");
+			}
+		},
+		"disconnect": async () => {
+			if (this.connected) {
+				this.socketConnection.close();
+			}
+		},
+		"emit": (message) => {
+			if (this.connected) {
+				let finalMessage = Object.assign(message, {
+					"briefResponse": "false"
+				});
+				finalMessage = JSON.stringify(finalMessage);
+
+				console.log("[Digit websocket] > " + finalMessage);
+
+				this.socketConnection.send(finalMessage);
+			} else {
+				console.error('[Digit websocket] SOCKET NOT CONNECTED', message);
+			}
+		},
+		"onmessage": (message) => {
+			// {
+			// "id":"d93c5a6e-8d27-4b1c-8689-9827a9d73966",
+			// "originator":{"clusterId":"56aff8cb-d90f-4c5b-bd0f-3afa09ddedd2"},
+			// "params":[{"id":"9e8939d5-23e0-f762-f893-3b93f98cd80c","type":"NEW"}],
+			// "recipient":{"clusterId":"56aff8cb-d90f-4c5b-bd0f-3afa09ddedd2","id":"3e573a4c-3820-4618-80f0-150094afe038"},"status":"NEW","synch":false,"workspace":"__MAIN_WS__"
+			//}
+
+			let jsonData;
+			try {
+				jsonData = JSON.parse(message);
+			} catch (err) {
+				console.error('[Digit websocket] ERROR: response is not a JSON');
+
+				return;
+			}
+
+			if (this.pingPongInt && jsonData.type === "pong") {
+				console.log('[Digit websocket] pingPong: pong');
+
+				return;
+			}
+
+			// SERVER RESPONSE FOR SUBSCRIBE
+			// {"created":["OnNotification[admin]"],"id":"0071a85c-d2b2-4b44-88e8-da975086d85a"}
+
+			if (jsonData['created']) {
+				// Save server receiverId for unregister
+				let [subscribeName] = jsonData.created;
+				let subscribe = subscribes.get(subscribeName);
+				if (!subscribe) {
+					console.warn("[Digit websocket] ubnormal situation! Receive message without subscribe");
+
+					return;
+				}
+
+				let subscribeId = jsonData.id;
+				subscribe.id = subscribeId;
+				// Add subscriber callback for call after receive message
+				receivers.set(subscribeId, subscribe.cb);
+
+				subscribe.createdCb && subscribe.createdCb();
+			}
+
+			let recipientData = jsonData.recipient;
+			if (recipientData) {
+				// IF RECEIVER EXIST NEED CALL THEM CALLBACK WITH RECEIVED PARAMS
+				let subscribeId = recipientData.id;
+				let cbs = receivers.get(subscribeId);
+
+				if (cbs && cbs.length > 0) {
+					let eventParams = jsonData.params;
+					for (let cb of cbs) {
+						cb(eventParams);
+					}
+				}
+			}
+		},
+		"connected": false
+	}
+	Object.defineProperty(socket, "PING_PONG_TIMEOUT", {
+		"enumerable": true,
+		"value": 10000
 	});
-	function login(){
+	Object.defineProperty(socket, "subscribes", {
+		"enumerable": true,
+		"value": new Map()
+	});
+	Object.defineProperty(socket, "receivers", {
+		"enumerable": true,
+		"value": new Map()
+	});
+
+	function getSubscribeNameByEntityId(entityId) {
+		let subscribeName = "OnDataChanged[" + entityId + "]";
+		return subscribeName;
+	}
+
+	async function watchEntity(entityId, handler) {
+		let subscribeName = getSubscribeNameByEntityId(entityId);
+		await socket.registerSubscribe(subscribeName, (eventParams) => {
+			for (let eventParam of eventParams) {
+				if (eventParam) {
+					let objectId = eventParam.id,
+						eventType = eventParam.type;
+
+					switch (eventType) {
+						case "NEW":
+						case "UPDATED":
+						case "DELETED":
+							handler(eventType, objectId);
+						break;
+						default:
+							console.warn("[Digit websocket] unknown event type: " + eventType);
+
+							handler("UNKNOWN", objectId);
+						break;
+					}
+				}
+			}
+		});
+	}
+
+	function stopWatchEntity(entityId) {
+		let subscribeName = getSubscribeNameByEntityId(entityId);
+		socket.unregisterSubscribe(subscribeName);
+	}
+
+    return {
+        "watchEntity": watchEntity,
+        "stopWatchEntity": stopWatchEntity
+    }
+}
+
+function DigitApp({appUrl, username, password}) {
+	function login() {
 		return globalLogin({
 			appUrl: appUrl,
 			username,
 			password
 		});
 	}
-	function checkCookie(userCookie){
+	function checkCookie(userCookie) {
 		return globalCheckCookie({
 			appUrl: appUrl,
 			userCookie
 		});
 	}
+
+	const CookieManager = new globalCookieManager({
+		"loginFunction": login, 
+		"checkCookieFunction": checkCookie
+	});
+	
+	const SocketManager = new globalSocketManager({
+		"getCookieFunction": CookieManager.getActualCookie.bind(CookieManager),
+		"appUrl": appUrl
+	});
 
 	this.FORM_ELEMENT_TYPES = new TotallyFrozenObject({
 		//группа полей
@@ -679,6 +982,12 @@ function DigitApp({appUrl, username, password}){
 			path,
 			requestData
 		});
+	}
+	this.watchEntity = async function(entityId, handler) {
+		SocketManager.watchEntity(entityId, handler);
+	}
+	this.stopWatchEntity = async function (entityId) {
+		SocketManager.stopWatchEntity(entityId);
 	}
 }
 
