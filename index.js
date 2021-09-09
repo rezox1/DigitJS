@@ -563,7 +563,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 		"resubscribe": function() {
 			this.receivers.clear();
 
-			for (let [subscribeName] of subscribes) {
+			for (let [subscribeName] of this.subscribes) {
 				// retry registration
 				this.emit({
 					action: "REGISTRATION",
@@ -581,12 +581,12 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				names: [subscribeName]
 			});
 
-			let subscribe = subscribes.get(subscribeName);
+			let subscribe = this.subscribes.get(subscribeName);
 			if (subscribe) {
 				let subscribeId = subscribe.id;
 
-				receivers.delete(subscribeId);
-				subscribes.delete(subscribeName);
+				this.receivers.delete(subscribeId);
+				this.subscribes.delete(subscribeName);
 			}
 
 			if (this.subscribes.size === 0) {
@@ -712,7 +712,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			if (jsonData['created']) {
 				// Save server receiverId for unregister
 				let [subscribeName] = jsonData.created;
-				let subscribe = subscribes.get(subscribeName);
+				let subscribe = this.subscribes.get(subscribeName);
 				if (!subscribe) {
 					console.warn("[Digit websocket] ubnormal situation! Receive message without subscribe");
 
@@ -722,7 +722,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				let subscribeId = jsonData.id;
 				subscribe.id = subscribeId;
 				// Add subscriber callback for call after receive message
-				receivers.set(subscribeId, subscribe.cb);
+				this.receivers.set(subscribeId, subscribe.cb);
 
 				subscribe.createdCb && subscribe.createdCb();
 			}
@@ -731,7 +731,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			if (recipientData) {
 				// IF RECEIVER EXIST NEED CALL THEM CALLBACK WITH RECEIVED PARAMS
 				let subscribeId = recipientData.id;
-				let cbs = receivers.get(subscribeId);
+				let cbs = this.receivers.get(subscribeId);
 
 				if (cbs && cbs.length > 0) {
 					let eventParams = jsonData.params;
