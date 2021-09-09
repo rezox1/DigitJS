@@ -503,7 +503,7 @@ function globalCookieManager({loginFunction, checkCookieFunction}){
 
 function globalSocketManager({getCookieFunction, appUrl}) {
 	const socket = {
-		"startPingPong": () => {
+		"startPingPong": function() {
 			const sendPing = () => {
 				if (this.connected) {
 					console.log('[Digit websocket] pingPong: ping');
@@ -522,7 +522,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 
 			this.pingPongInt = setInterval(sendPing, this.PING_PONG_TIMEOUT);
 		},
-		"stopPingPong": () => {
+		"stopPingPong": function() {
 			console.log('[Digit websocket] stop pingPong');
 
 			if (this.pingPongInt) {
@@ -530,7 +530,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				this.pingPongInt = null;
 			}
 		},
-		"registerSubscribe": async (subscribeName, cb, createdCb) => {
+		"registerSubscribe": async function(subscribeName, cb, createdCb) {
 			if (!subscribeName) {
 				throw new Error("subscribeName is not defined");
 			} else if (!cb) {
@@ -560,7 +560,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				});
 			}
 		},
-		"resubscribe": () => {
+		"resubscribe": function() {
 			this.receivers.clear();
 
 			for (let [subscribeName] of subscribes) {
@@ -571,7 +571,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				});
 			}
 		},
-		"unregisterSubscribe": async (subscribeName) => {
+		"unregisterSubscribe": async function(subscribeName) {
 			if (!subscribeName) {
 				throw new Error("subscribeName is not defined");
 			}
@@ -593,7 +593,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				await this.disconnect();
 			}
 		},
-		"connect": async () => {
+		"connect": async function() {
 			function sleep(ms) {
 				return new Promise(resolve => setTimeout(resolve, ms));
 			}
@@ -664,12 +664,12 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				throw new Error("Connetion not established until timeout");
 			}
 		},
-		"disconnect": async () => {
+		"disconnect": async function() {
 			if (this.connected) {
 				this.socketConnection.close();
 			}
 		},
-		"emit": (message) => {
+		"emit": function(message) {
 			if (this.connected) {
 				let finalMessage = Object.assign(message, {
 					"briefResponse": "false"
@@ -683,7 +683,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				console.error('[Digit websocket] SOCKET NOT CONNECTED', message);
 			}
 		},
-		"onmessage": (message) => {
+		"onmessage": function(message) {
 			// {
 			// "id":"d93c5a6e-8d27-4b1c-8689-9827a9d73966",
 			// "originator":{"clusterId":"56aff8cb-d90f-4c5b-bd0f-3afa09ddedd2"},
