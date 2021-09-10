@@ -674,6 +674,8 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 		},
 		"disconnect": function() {
+			console.debug("[Digit websocket] force disconnect websocket");
+
 			if (this.connected) {
 				this.socketConnection.close();
 			}
