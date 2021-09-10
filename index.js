@@ -613,7 +613,11 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 
 			const cookie = getCookieFunction();
 
-			const socketConnection = new WebSocket(websocketConnectionUrl);
+			const socketConnection = new WebSocket(websocketConnectionUrl, [], {
+				"headers": {
+					"Cookie": cookie
+				}
+			});
 
 			socketConnection.onopen = () => {
 				console.log('[Digit websocket] connection established');
