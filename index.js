@@ -537,7 +537,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				throw new Error("cb is not defined");
 			}
 
-			if (this.subscribes.size === 0) {
+			if (this.subscribes.size === 0 && !this.connected) {
 				await this.connect();
 			}
 
@@ -571,15 +571,17 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				});
 			}
 		},
-		"unregisterSubscribe": async function(subscribeName) {
+		"unregisterSubscribe": function(subscribeName) {
 			if (!subscribeName) {
 				throw new Error("subscribeName is not defined");
 			}
 
-			this.emit({
-				action: "UNREGISTRATION",
-				names: [subscribeName]
-			});
+			if (this.connected) {
+				this.emit({
+					action: "UNREGISTRATION",
+					names: [subscribeName]
+				});
+			}
 
 			let subscribe = this.subscribes.get(subscribeName);
 			if (subscribe) {
@@ -589,8 +591,8 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				this.subscribes.delete(subscribeName);
 			}
 
-			if (this.subscribes.size === 0) {
-				await this.disconnect();
+			if (this.subscribes.size === 0 && this.connected) {
+				this.disconnect();
 			}
 		},
 		"connect": async function() {
@@ -601,15 +603,13 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			const CONNECT_TIMEOUT = 10000;
 
 			const parsedUrl = new URL(appUrl);
-
-			let protocol, host = parsedUrl.host;
+			let wsProtocol, wsHost = parsedUrl.host;
 			if (parsedUrl.protocol === 'https:') {
-				protocol = "wss://";
+				wsProtocol = "wss://";
 			} else {
-				protocol = "ws://";
+				wsProtocol = "ws://";
 			}
-
-			let websocketConnectionUrl = protocol + host + "/websocket/";
+			let websocketConnectionUrl = wsProtocol + wsHost + "/websocket/";
 
 			const cookie = await getCookieFunction();
 
@@ -619,7 +619,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				}
 			});
 
-			socketConnection.onopen = () => {
+			socketConnection.onopen = (openEvent) => {
 				console.debug('[Digit websocket] connection established');
 
 				this.connected = true;
@@ -629,25 +629,28 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				this.resubscribe();
 			}
 
-			socketConnection.onclose = (code, reason) => {
+			socketConnection.onclose = (closeEvent) => {
 				console.debug("[Digit websocket] DISCONNECT");
-				console.debug(code, reason);
 
 				this.connected = false;
 
 				this.stopPingPong();
+
+				if (this.subscribes.size > 0) {
+					setTimeout(this.connect.bind(this), this.RECONNECT_INTERVAL);
+				}
 			}
 
-			socketConnection.onmessage = (event) => {
-				let eventData = event.data;
+			socketConnection.onmessage = (messageEvent) => {
+				let eventData = messageEvent.data;
 
 				console.debug("[Digit websocket] < : " + eventData);
 
 				this.onmessage(eventData);
 			}
 
-			socketConnection.onerror = (error) => {
-				console.error("[Digit websocket] ERROR: " + error);
+			socketConnection.onerror = (errorEvent) => {
+				console.error(errorEvent);
 
 				this.stopPingPong();
 			}
@@ -668,7 +671,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				throw new Error("Connetion not established until timeout");
 			}
 		},
-		"disconnect": async function() {
+		"disconnect": function() {
 			if (this.connected) {
 				this.socketConnection.close();
 			}
@@ -712,7 +715,6 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 
 			// SERVER RESPONSE FOR SUBSCRIBE
 			// {"created":["OnNotification[admin]"],"id":"0071a85c-d2b2-4b44-88e8-da975086d85a"}
-
 			if (jsonData['created']) {
 				// Save server receiverId for unregister
 				let [subscribeName] = jsonData.created;
@@ -750,6 +752,10 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 	Object.defineProperty(socket, "PING_PONG_TIMEOUT", {
 		"enumerable": true,
 		"value": 10000
+	});
+	Object.defineProperty(socket, "RECONNECT_INTERVAL", {
+		"enumerable": true,
+		"value": 3000
 	});
 	Object.defineProperty(socket, "subscribes", {
 		"enumerable": true,
