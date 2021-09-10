@@ -631,6 +631,8 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 
 			socketConnection.onclose = (closeEvent) => {
 				console.debug("[Digit websocket] DISCONNECT");
+				console.debug("[Digit websocket] code: " + closeEvent.code);
+				console.debug("[Digit websocket] reason: " + closeEvent.reason);
 
 				this.connected = false;
 
