@@ -611,7 +611,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 
 			let websocketConnectionUrl = protocol + host + "/websocket/";
 
-			const cookie = getCookieFunction();
+			const cookie = await getCookieFunction();
 
 			const socketConnection = new WebSocket(websocketConnectionUrl, [], {
 				"headers": {
