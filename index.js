@@ -506,7 +506,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 		"startPingPong": function() {
 			const sendPing = () => {
 				if (this.connected) {
-					console.log('[Digit websocket] pingPong: ping');
+					console.debug('[Digit websocket] pingPong: ping');
 
 					this.emit({
 						action: "PING"
@@ -518,12 +518,12 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				return;
 			}
 
-			console.log('[Digit websocket] start pingPong');
+			console.debug('[Digit websocket] start pingPong');
 
 			this.pingPongInt = setInterval(sendPing, this.PING_PONG_TIMEOUT);
 		},
 		"stopPingPong": function() {
-			console.log('[Digit websocket] stop pingPong');
+			console.debug('[Digit websocket] stop pingPong');
 
 			if (this.pingPongInt) {
 				clearInterval(this.pingPongInt);
@@ -620,7 +620,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			});
 
 			socketConnection.onopen = () => {
-				console.log('[Digit websocket] connection established');
+				console.debug('[Digit websocket] connection established');
 
 				this.connected = true;
 
@@ -630,8 +630,8 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 
 			socketConnection.onclose = (code, reason) => {
-				console.log("[Digit websocket] DISCONNECT");
-				console.log(code, reason);
+				console.debug("[Digit websocket] DISCONNECT");
+				console.debug(code, reason);
 
 				this.connected = false;
 
@@ -641,7 +641,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			socketConnection.onmessage = (event) => {
 				let eventData = event.data;
 
-				console.log("[Digit websocket] < : " + eventData);
+				console.debug("[Digit websocket] < : " + eventData);
 
 				this.onmessage(eventData);
 			}
@@ -680,7 +680,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				});
 				finalMessage = JSON.stringify(finalMessage);
 
-				console.log("[Digit websocket] > " + finalMessage);
+				console.debug("[Digit websocket] > " + finalMessage);
 
 				this.socketConnection.send(finalMessage);
 			} else {
@@ -705,7 +705,7 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 
 			if (this.pingPongInt && jsonData.type === "pong") {
-				console.log('[Digit websocket] pingPong: pong');
+				console.debug('[Digit websocket] pingPong: pong');
 
 				return;
 			}
