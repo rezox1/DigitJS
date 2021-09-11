@@ -537,9 +537,10 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 				throw new Error("cb is not defined");
 			}
 
+			let needToEstablishConnection = false;
 			if (this.subscribes.size === 0 && !this.connected) {
 				if (!this.socketConnection) {
-					await this.connect();
+					needToEstablishConnection = true;
 				}
 			}
 
@@ -562,6 +563,10 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 					"cb": [cb],
 					"createdCb": createdCb
 				});
+			}
+
+			if (needToEstablishConnection) {
+				await this.connect();
 			}
 		},
 		"resubscribe": function() {
