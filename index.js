@@ -163,6 +163,9 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 		searchObject.sort = searchParameters.sort;
 		searchObject.sortAsc = searchParameters.sortAsc || false;
 	}
+	if (searchParameters.search) {
+		searchObject.search = searchParameters.search;
+	}
 	
 	let searchResult = await axios.post(appUrl + `rest/data/entity/`, searchObject, {
 		headers: {
