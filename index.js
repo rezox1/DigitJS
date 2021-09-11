@@ -538,7 +538,9 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 
 			if (this.subscribes.size === 0 && !this.connected) {
-				await this.connect();
+				if (!this.socketConnection) {
+					await this.connect();
+				}
 			}
 
 			let subscribe = this.subscribes.get(subscribeName);
@@ -549,10 +551,12 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 					createdCb();
 				}
 			} else {
-				this.emit({
-					action: "REGISTRATION",
-					names: [subscribeName]
-				});
+				if (this.connected) {
+					this.emit({
+						action: "REGISTRATION",
+						names: [subscribeName]
+					});
+				}
 
 				this.subscribes.set(subscribeName, {
 					"cb": [cb],
