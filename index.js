@@ -1,6 +1,9 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 const {WebSocket} = require("ws");
+const fs = require('fs');
+const fsPromises = require('fs').promises;
+const path = require('path');
 
 const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
 
@@ -400,6 +403,55 @@ async function globalCustomPost({appUrl, userCookie, path, requestData}){
 		timeout: 60000
 	});
 	return responseData;
+}
+
+async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
+	async function downloadFileWithAxios(fileUrl, userCookie, filePath) {
+		const writer = fs.createWriteStream(filePath);
+
+		const response = await axios.get(fileUrl, {
+			headers: {
+				"Cookie": userCookie
+			},
+			responseType: 'stream',
+			//10 minutes
+			timeout: 600000
+		});
+
+		response.data.pipe(writer);
+
+		return new Promise((resolve, reject) => {
+			writer.on('finish', resolve.bind(this, response));
+			writer.on('error', reject);
+		});
+	}
+
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!fileId) {
+		throw new Error("fileId is not defined");
+	}
+
+	let filePath;
+	let customFileDir = options.fileDir;
+	if (customFileDir) {
+		filePath = Path.resolve(__dirname, customFileDir, fileId);
+	} else {
+		filePath = Path.resolve(__dirname, fileId);
+	}
+
+	let fileUrl = appUrl + 'rest/file/download/' + fileId;
+
+	let responseData = await downloadFileWithAxios(fileUrl, userCookie, filePath);
+	if (options.fileName) {
+		//await fsPromises.rename();
+	}
+
+	console.log(responseData);
+
+	return filePath;
 }
 
 async function globalLogin({appUrl, username, password}) {
@@ -1014,6 +1066,15 @@ function DigitApp({appUrl, username, password}) {
 	}
 	this.stopWatchEntity = async function (entityId) {
 		SocketManager.stopWatchEntity(entityId);
+	}
+	this.downloadFile = async function(fileId, options) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalDownloadFile({
+			appUrl: appUrl,
+			userCookie,
+			fileId,
+			options
+		});
 	}
 }
 
