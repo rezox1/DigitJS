@@ -407,6 +407,14 @@ async function globalCustomPost({appUrl, userCookie, path, requestData}){
 
 async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	async function downloadFileWithAxios(fileUrl, userCookie, filePath) {
+		if (!fileUrl) {
+			throw new Error("fileUrl is not defined");
+		} else if (!userCookie) {
+			throw new Error("userCookie is not defined");
+		} else if (!filePath) {
+			throw new Error("filePath is not defined");
+		}
+
 		const writer = fs.createWriteStream(filePath);
 
 		const response = await axios.get(fileUrl, {
@@ -426,6 +434,36 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 		});
 	}
 
+	function getFileNameFromContentDisposition(contentDisposition) {
+		if (!contentDisposition) {
+			throw new Error("contentDisposition is not defined");
+		}
+
+		let fileName;
+
+		let filenameRegex = /filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/gmi;
+		let matches = filenameRegex.exec(contentDisposition);
+		if (matches && matches[1]) {
+			fileName = matches[1];
+			fileName = decodeURIComponent(fileName);
+		}
+
+		return fileName;
+	}
+
+	async function renameFile(currentFilePath, newFileName) {
+		if (!currentFilePath) {
+			throw new Error("currentFilePath is not defined");
+		} else if (!newFileName) {
+			throw new Error("newFileName is not defined");
+		}
+
+		let fileDir = path.dirname(currentFilePath);
+		let newFilePath = fileDir + "/" + newFileName;
+		await fsPromises.rename(currentFilePath, newFilePath);
+		return newFilePath;
+	}
+
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -434,22 +472,35 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 		throw new Error("fileId is not defined");
 	}
 
+	let currentDir = process.cwd();
 	let filePath;
-	let customFileDir = options.fileDir;
-	if (customFileDir) {
-		filePath = path.resolve(__dirname, customFileDir, fileId);
+	if (options) {
+		let customFileDir = options.fileDir;
+		if (customFileDir) {
+			filePath = path.resolve(currentDir, customFileDir, fileId);
+		} else {
+			filePath = path.resolve(currentDir, fileId);
+		}
 	} else {
-		filePath = path.resolve(__dirname, fileId);
+		filePath = path.resolve(currentDir, fileId);
 	}
 
 	let fileUrl = appUrl + 'rest/file/download/' + fileId;
 
 	let responseData = await downloadFileWithAxios(fileUrl, userCookie, filePath);
-	if (options.fileName) {
-		//await fsPromises.rename();
+	if (options && options.fileName) {
+		let customFileName = options.fileName;
+		filePath = await renameFile(filePath, customFileName);
+	} else {
+		let responseHeaders = responseData.headers;
+		if (responseHeaders) {
+			let contentDisposition = responseHeaders['content-disposition'];
+			if (contentDisposition) {
+				let fileName = getFileNameFromContentDisposition(contentDisposition);
+				filePath = await renameFile(filePath, fileName);
+			}
+		}
 	}
-
-	console.log(responseData);
 
 	return filePath;
 }
