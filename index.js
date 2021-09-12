@@ -437,9 +437,9 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	let filePath;
 	let customFileDir = options.fileDir;
 	if (customFileDir) {
-		filePath = Path.resolve(__dirname, customFileDir, fileId);
+		filePath = path.resolve(__dirname, customFileDir, fileId);
 	} else {
-		filePath = Path.resolve(__dirname, fileId);
+		filePath = path.resolve(__dirname, fileId);
 	}
 
 	let fileUrl = appUrl + 'rest/file/download/' + fileId;
