@@ -4,6 +4,7 @@ const {WebSocket} = require("ws");
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
+const dayjs = require('dayjs');
 
 const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
 
@@ -511,6 +512,80 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	}
 
 	return filePath;
+}
+
+async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
+	async function getSpeacialDaysByYear({appUrl, userCookie, verifiedYear}) {
+		if (!appUrl) {
+			throw new Error("appUrl is not defined");
+		} else if (!userCookie) {
+			throw new Error("userCookie is not defined");
+		} else if (!verifiedYear) {
+			throw new Error("verifiedYear is not defined");
+		} else if (typeof verifiedYear !== "string") {
+			throw new Error("type of verifiedYear is not string");
+		}
+
+		let {"data": specialDays} = await axios.get(appUrl + "rest/calendar/getspecialdays/" + verifiedYear, {
+			headers: {
+				"Content-Type": "application/json;charset=UTF-8",
+				"Cookie": userCookie
+			},
+			//60 seconds
+			timeout: 60000
+		});
+		for (let specialDay of specialDays) {
+			specialDay.date = dayjs(specialDay.date);
+		}
+
+		return specialDays;
+	}
+
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!verifiedDate) {
+		throw new Error("verifiedDate is not defined");
+	} else if (!(verifiedDate instanceof Date)) {
+		throw new Error("verifiedDate is not Date");
+	}
+
+	const SATURDAY_CODE = 6,
+		SUNDAY_CODE = 0;
+
+	let isWorkingDay = true;
+
+	verifiedDate = dayjs(verifiedDate);
+
+	let verifiedDayOfWeek = verifiedDate.day();
+	if (verifiedDayOfWeek === SATURDAY_CODE || verifiedDayOfWeek === SUNDAY_CODE) {
+		isWorkingDay = false;
+	}
+
+	let verifiedYear = String(verifiedDate.year());
+	let specialDaysData = await getSpeacialDaysByYear({
+		"appUrl": appUrl,
+		"userCookie": userCookie,
+		"verifiedYear": verifiedYear
+	});
+
+	for (let specialDayData of specialDaysData) {
+		let specialDay = specialDayData.date,
+			specialDayWorking = specialDayData.working;
+
+		if (verifiedDate.isSame(specialDay, "day")) {
+			if (specialDayWorking) {
+				isWorkingDay = true;
+			} else {
+				isWorkingDay = false;
+			}
+
+			break;
+		}
+	}
+
+	return isWorkingDay;
 }
 
 async function globalLogin({appUrl, username, password}) {
@@ -1133,6 +1208,14 @@ function DigitApp({appUrl, username, password}) {
 			userCookie,
 			fileId,
 			options
+		});
+	}
+	this.isWorkingDay = async function(verifiedDate) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalIsWorkingDay({
+			appUrl: appUrl,
+			userCookie,
+			verifiedDate
 		});
 	}
 }
