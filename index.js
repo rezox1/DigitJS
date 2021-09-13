@@ -141,6 +141,8 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 		if (typeof searchParameters.sortAsc !== "boolean") {
 			throw new Error("type of searchParameters.sortAsc is not boolean");
 		}
+	} else if (searchParameters.objectIds && !Array.isArray(searchParameters.objectIds)) {
+		throw new Error("searchParameters.objectIds is not Array");
 	}
 
 	let searchObject = {};
@@ -168,6 +170,9 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	}
 	if (searchParameters.search) {
 		searchObject.search = searchParameters.search;
+	}
+	if (searchParameters.objectIds) {
+		searchObject.objectIds = searchParameters.objectIds;
 	}
 	
 	let searchResult = await axios.post(appUrl + `rest/data/entity/`, searchObject, {
