@@ -546,9 +546,7 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
 		throw new Error("userCookie is not defined");
-	} else if (!verifiedDate) {
-		throw new Error("verifiedDate is not defined");
-	} else if (!(verifiedDate instanceof Date)) {
+	} else if (verifiedDate && !(verifiedDate instanceof Date)) {
 		throw new Error("verifiedDate is not Date");
 	}
 
@@ -557,6 +555,9 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
 
 	let isWorkingDay = true;
 
+	if (!verifiedDate) {
+		verifiedDate = new Date();
+	}
 	verifiedDate = dayjs(verifiedDate);
 
 	let verifiedDayOfWeek = verifiedDate.day();
