@@ -5,6 +5,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const dayjs = require('dayjs');
+const _ = require('underscore');
 
 const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
 
@@ -1210,14 +1211,14 @@ function DigitApp({appUrl, username, password}) {
 			options
 		});
 	}
-	this.isWorkingDay = async function(verifiedDate) {
+	this.isWorkingDay = _.memoize(async function(verifiedDate) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalIsWorkingDay({
 			appUrl: appUrl,
 			userCookie,
 			verifiedDate
 		});
-	}
+	});
 }
 
 module.exports.DigitApp = DigitApp;
