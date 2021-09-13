@@ -174,6 +174,9 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	if (searchParameters.objectIds) {
 		searchObject.objectIds = searchParameters.objectIds;
 	}
+	if (searchParameters.gridObjectId) {
+		searchObject.gridObjectId = searchParameters.gridObjectId;
+	}
 	
 	let searchResult = await axios.post(appUrl + `rest/data/entity/`, searchObject, {
 		headers: {
