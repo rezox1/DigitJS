@@ -836,10 +836,6 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 		},
 		"connect": async function() {
-			function sleep(ms) {
-				return new Promise(resolve => setTimeout(resolve, ms));
-			}
-
 			const CONNECT_TIMEOUT = 10000;
 
 			const parsedUrl = new URL(appUrl);
