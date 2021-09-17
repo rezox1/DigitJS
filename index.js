@@ -7,20 +7,24 @@ const path = require('path');
 const dayjs = require('dayjs');
 const _ = require('underscore');
 
-const CONNECTION_ERROR_CODES = ["ECONNABORTED", "ECONNRESET", "ETIMEDOUT"];
+const CONNECTION_ERROR_CODES = [
+	"ECONNABORTED",
+	"ECONNRESET",
+	"ETIMEDOUT"
+];
 
 class TotallyFrozenObject {
-    constructor(objectForFreeze) {
-        return new Proxy(Object.freeze(objectForFreeze), {
-            get (target, property) {
-                if (property in target) {
-                    return target[property];
-                } else {
-                    throw new ReferenceError(property + " is not defined");
-                }
-            }
-        });
-    }
+	constructor(objectForFreeze) {
+		return new Proxy(Object.freeze(objectForFreeze), {
+			get (target, property) {
+				if (property in target) {
+					return target[property];
+				} else {
+					throw new ReferenceError(property + " is not defined");
+				}
+			}
+		});
+	}
 }
 
 class AuthError extends Error {
