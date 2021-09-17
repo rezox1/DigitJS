@@ -60,7 +60,8 @@ function syncResistant(functionToResist) {
 			} catch (err) {
 				if (err.response) {
 					let responseStatus = err.response.status;
-					if (responseStatus === "503") {
+					if (responseStatus === 503) {
+						console.info("Synchronization is in progress...");
 						if (attempt <= RETRY_COUNT_LIMIT) {
 							await sleep(RETRY_INTERVAL);
 						} else {
@@ -651,7 +652,7 @@ async function globalLogin({appUrl, username, password}) {
 	} catch (err) {
 		if (err.response) {
 			let responseStatus = err.response.status;
-			if (responseStatus === "401") {
+			if (responseStatus === 401) {
 				throw new AuthError("Username or password is incorrect");
 			} else {
 				throw err;
@@ -686,7 +687,7 @@ async function globalCheckCookie({appUrl, userCookie}) {
 	} catch (err) {
 		if (err.response) {
 			let responseStatus = err.response.status;
-			if (responseStatus === "404") {
+			if (responseStatus === 404) {
 				console.warn("User cookie is not valid");
 			} else {
 				console.error(err);
