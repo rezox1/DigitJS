@@ -1048,19 +1048,19 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 }
 
 function DigitApp({appUrl, username, password}) {
-	function login() {
+	const login = syncResistant(function login() {
 		return globalLogin({
 			appUrl: appUrl,
 			username,
 			password
 		});
-	}
-	function checkCookie(userCookie) {
+	});
+	const checkCookie = syncResistant(function checkCookie(userCookie) {
 		return globalCheckCookie({
 			appUrl: appUrl,
 			userCookie
 		});
-	}
+	});
 
 	const CookieManager = new globalCookieManager({
 		"loginFunction": login, 
