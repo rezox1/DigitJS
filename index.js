@@ -41,6 +41,42 @@ class AuthError extends Error {
 	}
 }
 
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function syncResistant(functionToResist) {
+	const RETRY_COUNT_LIMIT = 12,
+		RETRY_INTERVAL = 5000;
+
+	let attempt = 0;
+
+	return async function() {
+		for (;;) {
+			try {
+				attempt++;
+
+				return await functionToResist.apply(this, arguments);
+			} catch (err) {
+				if (err.response) {
+					let responseStatus = err.response.status;
+					if (responseStatus === "503") {
+						if (attempt <= RETRY_COUNT_LIMIT) {
+							await sleep(RETRY_INTERVAL);
+						} else {
+							throw err;
+						}
+					} else {
+						throw err;
+					}
+				} else {
+					throw err;
+				}
+			}
+		}
+	}
+}
+
 async function globalCreateObject({appUrl, userCookie, newObjectData}) {
 	if (!userCookie) {
 		throw new Error("userCookie is not defined");
@@ -1073,15 +1109,15 @@ function DigitApp({appUrl, username, password}) {
 		}
 	});
 
-	this.createObject = async function(newObjectData) {
+	this.createObject = syncResistant(async function(newObjectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalCreateObject({
 			appUrl: appUrl,
 			userCookie, 
 			newObjectData
 		});
-	}
-	this.saveObject = async function(objectId, objectData) {
+	});
+	this.saveObject = syncResistant(async function(objectId, objectData) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalSaveObject({
 			appUrl: appUrl,
@@ -1089,8 +1125,8 @@ function DigitApp({appUrl, username, password}) {
 			objectId,
 			objectData
 		});
-	}
-	this.getObject = async function(objectId, attributesToGet) {
+	});
+	this.getObject = syncResistant(async function(objectId, attributesToGet) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetObject({
 			appUrl: appUrl,
@@ -1098,92 +1134,92 @@ function DigitApp({appUrl, username, password}) {
 			objectId,
 			attributesToGet
 		});
-	}
-	this.getObjects = async function(searchParameters) {
+	});
+	this.getObjects = syncResistant(async function(searchParameters) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetObjects({
 			appUrl: appUrl,
 			userCookie, 
 			searchParameters
 		});
-	}
-	this.deleteObjects = async function(deleteObjectIds) {
+	});
+	this.deleteObjects = syncResistant(async function(deleteObjectIds) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalDeleteObjects({
 			appUrl: appUrl,
 			userCookie, 
 			deleteObjectIds
 		});
-	}
-	this.getForms = async function() {
+	});
+	this.getForms = syncResistant(async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetForms({
 			appUrl: appUrl,
 			userCookie
 		});
-	}
-	this.getVises = async function() {
+	});
+	this.getVises = syncResistant(async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetVises({
 			appUrl: appUrl,
 			userCookie
 		});
-	}
-	this.getWorkflows = async function() {
+	});
+	this.getWorkflows = syncResistant(async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetWorkflows({
 			appUrl: appUrl,
 			userCookie
 		});
-	}
-	this.getUMLSchema = async function() {
+	});
+	this.getUMLSchema = syncResistant(async function() {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetUMLSchema({
 			appUrl: appUrl,
 			userCookie
 		});
-	}
-	this.getFormData = async function(formObjectId) {
+	});
+	this.getFormData = syncResistant(async function(formObjectId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetFormData({
 			appUrl: appUrl,
 			userCookie,
 			formObjectId
 		});
-	}
-	this.getVisData = async function(visObjectId) {
+	});
+	this.getVisData = syncResistant(async function(visObjectId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetVisData({
 			appUrl: appUrl,
 			userCookie,
 			visObjectId
 		});
-	}
-	this.syncEntity = async function(entityId) {
+	});
+	this.syncEntity = syncResistant(async function(entityId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalSyncEntity({
 			appUrl: appUrl,
 			userCookie,
 			entityId
 		});
-	}
-	this.getTransactionData = async function(transactionId) {
+	});
+	this.getTransactionData = syncResistant(async function(transactionId) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalGetTransactionData({
 			appUrl: appUrl,
 			userCookie,
 			transactionId
 		});
-	}
-	this.createForm = async function(formData) {
+	});
+	this.createForm = syncResistant(async function(formData) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalCreateForm({
 			appUrl: appUrl,
 			userCookie,
 			formData
 		});
-	}
-	this.saveForm = async function(formObjectId, formData) {
+	});
+	this.saveForm = syncResistant(async function(formObjectId, formData) {
 		const userCookie = await CookieManager.getActualCookie();
 		await globalSaveForm({
 			appUrl: appUrl,
@@ -1191,8 +1227,8 @@ function DigitApp({appUrl, username, password}) {
 			formObjectId,
 			formData
 		});
-	}
-	this.customPost = async function(path, requestData) {
+	});
+	this.customPost = syncResistant(async function(path, requestData) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalCustomPost({
 			appUrl: appUrl,
@@ -1200,14 +1236,14 @@ function DigitApp({appUrl, username, password}) {
 			path,
 			requestData
 		});
-	}
+	});
 	this.watchEntity = async function(entityId, handler) {
-		SocketManager.watchEntity(entityId, handler);
+		await SocketManager.watchEntity(entityId, handler);
 	}
 	this.stopWatchEntity = async function (entityId) {
-		SocketManager.stopWatchEntity(entityId);
+		await SocketManager.stopWatchEntity(entityId);
 	}
-	this.downloadFile = async function(fileId, options) {
+	this.downloadFile = syncResistant(async function(fileId, options) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalDownloadFile({
 			appUrl: appUrl,
@@ -1215,15 +1251,15 @@ function DigitApp({appUrl, username, password}) {
 			fileId,
 			options
 		});
-	}
-	this.isWorkingDay = _.memoize(async function(verifiedDate) {
+	});
+	this.isWorkingDay = _.memoize(syncResistant(async function(verifiedDate) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalIsWorkingDay({
 			appUrl: appUrl,
 			userCookie,
 			verifiedDate
 		});
-	});
+	}));
 }
 
 module.exports.DigitApp = DigitApp;
