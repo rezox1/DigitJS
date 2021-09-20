@@ -848,66 +848,78 @@ function globalSocketManager({getCookieFunction, appUrl}) {
 			}
 			let websocketConnectionUrl = wsProtocol + wsHost + "/websocket/";
 
-			const cookie = await getCookieFunction();
+			let cookie;
+			try {
+				cookie = await getCookieFunction();
+			} catch (err) {
+				console.error(err);
 
-			const socketConnection = new WebSocket(websocketConnectionUrl, [], {
-				"headers": {
-					"Cookie": cookie
+				console.debug("[Digit websocket] Cannot call getCookieFunction function");
+				console.debug("[Digit websocket] Rety call getCookieFunction after: " + this.RECONNECT_INTERVAL);
+
+				setTimeout(this.connect.bind(this), this.RECONNECT_INTERVAL);
+			}
+
+			if (cookie) {
+				const socketConnection = new WebSocket(websocketConnectionUrl, [], {
+					"headers": {
+						"Cookie": cookie
+					}
+				});
+
+				socketConnection.onopen = (openEvent) => {
+					console.debug('[Digit websocket] connection established');
+
+					this.connected = true;
+
+					this.startPingPong();
+
+					this.resubscribe();
 				}
-			});
 
-			socketConnection.onopen = (openEvent) => {
-				console.debug('[Digit websocket] connection established');
+				socketConnection.onclose = (closeEvent) => {
+					console.debug("[Digit websocket] DISCONNECT");
+					console.debug("[Digit websocket] code: " + closeEvent.code);
+					console.debug("[Digit websocket] reason: " + closeEvent.reason);
 
-				this.connected = true;
+					this.connected = false;
 
-				this.startPingPong();
+					this.stopPingPong();
 
-				this.resubscribe();
-			}
-
-			socketConnection.onclose = (closeEvent) => {
-				console.debug("[Digit websocket] DISCONNECT");
-				console.debug("[Digit websocket] code: " + closeEvent.code);
-				console.debug("[Digit websocket] reason: " + closeEvent.reason);
-
-				this.connected = false;
-
-				this.stopPingPong();
-
-				if (this.subscribes.size > 0) {
-					setTimeout(this.connect.bind(this), this.RECONNECT_INTERVAL);
+					if (this.subscribes.size > 0) {
+						setTimeout(this.connect.bind(this), this.RECONNECT_INTERVAL);
+					}
 				}
-			}
 
-			socketConnection.onmessage = (messageEvent) => {
-				let eventData = messageEvent.data;
+				socketConnection.onmessage = (messageEvent) => {
+					let eventData = messageEvent.data;
 
-				console.debug("[Digit websocket] < : " + eventData);
+					console.debug("[Digit websocket] < : " + eventData);
 
-				this.onmessage(eventData);
-			}
-
-			socketConnection.onerror = (errorEvent) => {
-				console.error(errorEvent);
-
-				this.stopPingPong();
-			}
-
-			this.socketConnection = socketConnection;
-
-			for (let i = 0; i < CONNECT_TIMEOUT;) {
-				let checkInterval = 200;
-				if (this.connected) {
-					break;
-				} else {
-					await sleep(checkInterval);
-					i += checkInterval;
+					this.onmessage(eventData);
 				}
-			}
 
-			if (!this.connected) {
-				throw new Error("Connetion not established until timeout");
+				socketConnection.onerror = (errorEvent) => {
+					console.error(errorEvent);
+
+					this.stopPingPong();
+				}
+
+				this.socketConnection = socketConnection;
+
+				for (let i = 0; i < CONNECT_TIMEOUT;) {
+					let checkInterval = 200;
+					if (this.connected) {
+						break;
+					} else {
+						await sleep(checkInterval);
+						i += checkInterval;
+					}
+				}
+
+				if (!this.connected) {
+					throw new Error("Connetion not established until timeout");
+				}
 			}
 		},
 		"disconnect": function() {
