@@ -1,5 +1,6 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
+const axiosRetry = require('axios-retry');
 const {WebSocket} = require("ws");
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -7,11 +8,10 @@ const path = require('path');
 const dayjs = require('dayjs');
 const _ = require('underscore');
 
-const CONNECTION_ERROR_CODES = [
-	"ECONNABORTED",
-	"ECONNRESET",
-	"ETIMEDOUT"
-];
+axiosRetry(axios, {
+	"retries": 10,
+	"retryDelay": axiosRetry.exponentialDelay
+});
 
 class TotallyFrozenObject {
 	constructor(objectForFreeze) {
@@ -692,10 +692,6 @@ async function globalCheckCookie({appUrl, userCookie}) {
 			} else {
 				console.error(err);
 			}
-		} else if (CONNECTION_ERROR_CODES.includes(err.code)) {
-			console.warn("There are connection troubles...");
-
-			return await globalCheckCookie.apply(this, arguments);
 		} else {
 			console.error(err);
 		}
