@@ -184,8 +184,12 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 		if (typeof searchParameters.sortAsc !== "boolean") {
 			throw new Error("type of searchParameters.sortAsc is not boolean");
 		}
-	} else if (searchParameters.objectIds && !Array.isArray(searchParameters.objectIds)) {
-		throw new Error("searchParameters.objectIds is not Array");
+	} else if (searchParameters.objectIds) {
+		if (!Array.isArray(searchParameters.objectIds)) {
+			throw new Error("searchParameters.objectIds is not Array");
+		} else if (searchParameters.objectId) {
+			throw new Error("objectId and objectIds searchParameters are exclusive");
+		}
 	}
 
 	let searchObject = {};
@@ -214,7 +218,9 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	if (searchParameters.search) {
 		searchObject.search = searchParameters.search;
 	}
-	if (searchParameters.objectIds) {
+	if (searchParameters.objectId) {
+		searchObject.objectId = searchParameters.objectId;
+	} else if (searchParameters.objectIds) {
 		searchObject.objectIds = searchParameters.objectIds;
 	}
 	if (searchParameters.gridObjectId) {
