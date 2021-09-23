@@ -630,7 +630,7 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate, workingDays
 			let specialDay = specialDayData.date,
 				specialDayWorking = specialDayData.working;
 
-			if (verifiedDate.isSame(specialDay, "day")) {
+			if (localVerifiedDate.isSame(specialDay, "day")) {
 				if (specialDayWorking) {
 					isWorkingDay = true;
 				} else {
