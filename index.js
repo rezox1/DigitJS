@@ -6,7 +6,6 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const dayjs = require('dayjs');
-const _ = require('underscore');
 
 axiosRetry(axios, {
 	"retries": 10,
@@ -562,7 +561,7 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	return filePath;
 }
 
-async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
+async function globalIsWorkingDay({appUrl, userCookie, verifiedDate, workingDaysInfoMap}) {
 	async function getSpeacialDaysByYear({appUrl, userCookie, verifiedYear}) {
 		if (!appUrl) {
 			throw new Error("appUrl is not defined");
@@ -595,6 +594,8 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
 		throw new Error("userCookie is not defined");
 	} else if (verifiedDate && !(verifiedDate instanceof Date)) {
 		throw new Error("verifiedDate is not Date");
+	} else if (!workingDaysInfoMap) {
+		throw new Error("workingDaysInfoMap is not defined");
 	}
 
 	const SATURDAY_CODE = 6,
@@ -602,36 +603,45 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate}) {
 
 	let isWorkingDay = true;
 
-	if (!verifiedDate) {
-		verifiedDate = new Date();
-	}
-	verifiedDate = dayjs(verifiedDate);
-
-	let verifiedDayOfWeek = verifiedDate.day();
-	if (verifiedDayOfWeek === SATURDAY_CODE || verifiedDayOfWeek === SUNDAY_CODE) {
-		isWorkingDay = false;
+	let localVerifiedDate;
+	if (verifiedDate) {
+		localVerifiedDate = dayjs(verifiedDate);
+	} else {
+		localVerifiedDate = dayjs();
 	}
 
-	let verifiedYear = String(verifiedDate.year());
-	let specialDaysData = await getSpeacialDaysByYear({
-		"appUrl": appUrl,
-		"userCookie": userCookie,
-		"verifiedYear": verifiedYear
-	});
-
-	for (let specialDayData of specialDaysData) {
-		let specialDay = specialDayData.date,
-			specialDayWorking = specialDayData.working;
-
-		if (verifiedDate.isSame(specialDay, "day")) {
-			if (specialDayWorking) {
-				isWorkingDay = true;
-			} else {
-				isWorkingDay = false;
-			}
-
-			break;
+	let localVerifiedDateString = localVerifiedDate.format('DD.MM.YYYY');
+	if (workingDaysInfoMap.has(localVerifiedDateString)) {
+		isWorkingDay = workingDaysInfoMap.get(localVerifiedDateString);
+	} else {
+		let verifiedDayOfWeek = localVerifiedDate.day();
+		if (verifiedDayOfWeek === SATURDAY_CODE || verifiedDayOfWeek === SUNDAY_CODE) {
+			isWorkingDay = false;
 		}
+
+		let verifiedYear = String(localVerifiedDate.year());
+		let specialDaysData = await getSpeacialDaysByYear({
+			"appUrl": appUrl,
+			"userCookie": userCookie,
+			"verifiedYear": verifiedYear
+		});
+
+		for (let specialDayData of specialDaysData) {
+			let specialDay = specialDayData.date,
+				specialDayWorking = specialDayData.working;
+
+			if (verifiedDate.isSame(specialDay, "day")) {
+				if (specialDayWorking) {
+					isWorkingDay = true;
+				} else {
+					isWorkingDay = false;
+				}
+
+				break;
+			}
+		}
+
+		workingDaysInfoMap.set(localVerifiedDateString, isWorkingDay);
 	}
 
 	return isWorkingDay;
@@ -1087,6 +1097,8 @@ function DigitApp({appUrl, username, password}) {
 		"appUrl": appUrl
 	});
 
+	const workingDaysInfoMap = new Map();
+
 	this.FORM_ELEMENT_TYPES = new TotallyFrozenObject({
 		//группа полей
 		"FIELD_GROUP": "FormFieldset",
@@ -1263,14 +1275,15 @@ function DigitApp({appUrl, username, password}) {
 			options
 		});
 	});
-	this.isWorkingDay = _.memoize(syncResistant(async function(verifiedDate) {
+	this.isWorkingDay = syncResistant(async function(verifiedDate) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalIsWorkingDay({
 			appUrl: appUrl,
 			userCookie,
-			verifiedDate
+			verifiedDate,
+			workingDaysInfoMap
 		});
-	}));
+	});
 }
 
 module.exports.DigitApp = DigitApp;
