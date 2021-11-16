@@ -693,7 +693,7 @@ async function globalCheckCookie({appUrl, userCookie}) {
 
 	let checkCookieResult = true;
 	try {
-		await axios.head(appUrl + `rest/profile`, {
+		await axios.get(appUrl + `rest/notifications`, {
 			headers: {
 				"Cookie": userCookie
 			},
