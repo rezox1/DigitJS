@@ -618,7 +618,7 @@ async function globalCreateDictionary({appUrl, userCookie, dictionary}) {
 	return newDictionary.objectId;
 }
 
-async function globaladdDictionaryItem({appUrl, userCookie, dictionaryId, dictionaryItem}) {
+async function globalAddDictionaryItem({appUrl, userCookie, dictionaryId, dictionaryItem}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -639,7 +639,6 @@ async function globaladdDictionaryItem({appUrl, userCookie, dictionaryId, dictio
 	});
 
 	return mewDictionaryItem.objectId;
-
 }
 
 async function globalIsWorkingDay({appUrl, userCookie, verifiedDate, workingDaysInfoMap}) {
@@ -1382,7 +1381,7 @@ function DigitApp({appUrl, username, password}) {
 	});
 	this.addDictionaryItem = syncResistant(async function(dictionaryId, dictionaryItem) {
 		const userCookie = await CookieManager.getActualCookie();
-		return await globaladdDictionaryItem({
+		return await globalAddDictionaryItem({
 			appUrl: appUrl,
 			userCookie,
 			dictionaryId,
