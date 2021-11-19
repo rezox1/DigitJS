@@ -561,6 +561,86 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	return filePath;
 }
 
+async function globalGetDictionaries({appUrl, userCookie}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	}
+
+	const {"data": dictionaries} = await axios.get(appUrl + `rest/dictionary`, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+	return dictionaries;
+}
+
+async function globalCreateDictionary({appUrl, userCookie, dictionary}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!dictionary) {
+		throw new Error("dictionary is not defined");
+	}
+
+	let dictionaryObject = {};
+	if (dictionary.label) {
+		dictionaryObject.label = dictionary.label;
+	} else {
+		throw new Error("userCookie is not defined");
+	}
+
+	if (!dictionary.uniqueFields || (dictionary.uniqueFields && !dictionary.uniqueFields.length)) {
+		dictionaryObject.uniqueFields = ["name","code"];
+	} else {
+		dictionaryObject.uniqueFields = dictionary.uniqueFields;
+	}
+
+	if (!dictionary.customFields || (dictionary.customFields && !dictionary.customFields.length)) {
+		dictionaryObject.customFields = [];
+	} else {
+		dictionaryObject.customFields = dictionary.customFields;
+	}
+
+	let {"data": newDictionary} = await axios.post(appUrl + `rest/dictionary`, dictionaryObject, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+	return newDictionary.objectId;
+}
+
+async function globalAddDictionaryItem({appUrl, userCookie, dictionaryId, dictionaryItem}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!dictionaryId) {
+		throw new Error("dictionaryId is not defined");
+	} else if (!dictionaryItem) {
+		throw new Error("dictionaryItem is not defined");
+	}
+
+	let {"data": mewDictionaryItem} = await axios.post(appUrl + `rest/dictionary/${dictionaryId}/item`, dictionaryItem, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+
+	return mewDictionaryItem.objectId;
+}
+
 async function globalIsWorkingDay({appUrl, userCookie, verifiedDate, workingDaysInfoMap}) {
 	async function getSpeacialDaysByYear({appUrl, userCookie, verifiedYear}) {
 		if (!appUrl) {
@@ -1282,6 +1362,30 @@ function DigitApp({appUrl, username, password}) {
 			userCookie,
 			verifiedDate,
 			workingDaysInfoMap
+		});
+	});
+	this.getDictionaries = syncResistant(async function() {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetDictionaries({
+			appUrl: appUrl,
+			userCookie
+		});
+	});
+	this.saveDictionary = syncResistant(async function(dictionary) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalCreateDictionary({
+			appUrl: appUrl,
+			userCookie,
+			dictionary
+		});
+	});
+	this.addDictionaryItem = syncResistant(async function(dictionaryId, dictionaryItem) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalAddDictionaryItem({
+			appUrl: appUrl,
+			userCookie,
+			dictionaryId,
+			dictionaryItem
 		});
 	});
 }
