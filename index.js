@@ -727,6 +727,25 @@ async function globalIsWorkingDay({appUrl, userCookie, verifiedDate, workingDays
 	return isWorkingDay;
 }
 
+async function globalIsDigitWorking({appUrl}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	}
+
+	let digitIsWorking = true;
+
+	try {
+		await axios.get(appUrl + `rest/monitoring`, {
+			//10 seconds
+			timeout: 10000
+		});
+	} catch (err) {
+		digitIsWorking = false;
+	}
+
+	return digitIsWorking;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1388,6 +1407,11 @@ function DigitApp({appUrl, username, password}) {
 			dictionaryItem
 		});
 	});
+	this.isDigitWorking = async function() {
+		return await globalIsDigitWorking({
+			appUrl: appUrl
+		});
+	}
 }
 
 module.exports.DigitApp = DigitApp;
