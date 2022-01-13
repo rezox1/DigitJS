@@ -1407,11 +1407,11 @@ function DigitApp({appUrl, username, password}) {
 			dictionaryItem
 		});
 	});
-	this.isDigitWorking = syncResistant(async function() {
+	this.isDigitWorking = async function() {
 		return await globalIsDigitWorking({
 			appUrl: appUrl
 		});
-	});
+	}
 }
 
 module.exports.DigitApp = DigitApp;
