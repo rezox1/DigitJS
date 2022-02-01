@@ -1,6 +1,6 @@
 {
   "name": "digitjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JS library for communicating with Digit Platform",
   "main": "index.js",
   "scripts": {
