@@ -561,6 +561,29 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	return filePath;
 }
 
+async function globalGetFileInfo({appUrl, userCookie, fileId}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!fileId) {
+		throw new Error("fileId is not defined");
+	}
+
+	const {"data": fileInfo} = await axios.post(appUrl + 'rest/file/info', {
+		"objectId": fileId
+	}, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//10 seconds
+		timeout: 10000
+	});
+
+	return fileInfo;
+}
+
 async function globalGetDictionaries({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1372,6 +1395,14 @@ function DigitApp({appUrl, username, password}) {
 			userCookie,
 			fileId,
 			options
+		});
+	});
+	this.getFileInfo = syncResistant(async function(fileId) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetFileInfo({
+			appUrl: appUrl,
+			userCookie,
+			fileId
 		});
 	});
 	this.isWorkingDay = syncResistant(async function(verifiedDate) {
