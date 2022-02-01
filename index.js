@@ -389,6 +389,35 @@ async function globalGetTransactionData({appUrl, userCookie, transactionId}) {
 	return transactionData;
 }
 
+async function globalSyncDocuments({appUrl, userCookie, entityId, objectIds}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!entityId) {
+		throw new Error("entityId is not defined");
+	} else if (!objectIds) {
+		throw new Error("objectIds is not defined");
+	} else if (!Array.isArray(objectIds)) {
+		throw new Error("type of objectIds is not Array");
+	} else if (objectIds.length === 0) {
+		throw new Error("length of objectIds is 0");
+	}
+
+	const {"data": transactionId} = await axios.post(appUrl + `rest/umlsync/updateSolrDocuments`, {
+		"ids": objectIds,
+		"entityId": entityId
+	}, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//30 seconds
+		timeout: 30000
+	});
+	return transactionId;
+}
+
 async function globalCreateForm({appUrl, userCookie, formData}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1354,6 +1383,15 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl,
 			userCookie,
 			transactionId
+		});
+	});
+	this.syncDocuments = syncResistant(async function({entityId, objectIds}) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalSyncDocuments({
+			appUrl: appUrl,
+			userCookie,
+			entityId,
+			objectIds
 		});
 	});
 	this.createForm = syncResistant(async function(formData) {
