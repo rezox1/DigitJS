@@ -807,7 +807,7 @@ async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
 		throw new Error("jsToExecute is not defined");
 	}
 
-	const executionData = await axios.post(appUrl + `rest/jsapi/execute`, jsToExecute, {
+	const {"data": executionData} = await axios.post(appUrl + `rest/jsapi/execute`, jsToExecute, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
