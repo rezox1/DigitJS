@@ -798,6 +798,27 @@ async function globalIsDigitWorking({appUrl}) {
 	return digitIsWorking;
 }
 
+async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!jsToExecute) {
+		throw new Error("jsToExecute is not defined");
+	}
+
+	const executionData = await axios.post(appUrl + `rest/jsapi/execute`, jsToExecute, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+
+	return executionData;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1481,6 +1502,14 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl
 		});
 	}
+	this.executeServerJS = syncResistant(async function(jsToExecute) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalExecuteServerJS({
+			appUrl: appUrl,
+			userCookie,
+			jsToExecute
+		});
+	});
 }
 
 module.exports.DigitApp = DigitApp;
