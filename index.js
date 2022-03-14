@@ -787,15 +787,45 @@ async function globalIsDigitWorking({appUrl}) {
 	let digitIsWorking = true;
 
 	try {
-		await axios.get(appUrl + `rest/monitoring`, {
+		let monitoringData = await axios.get(appUrl + `rest/monitoring/info`, {
 			//10 seconds
 			timeout: 10000
 		});
+
+		if (monitoringData) {
+			let applicationMonitoringData = monitoringData.Application;
+			if (applicationMonitoringData) {
+				if (applicationMonitoringData.status !== "OK") {
+					digitIsWorking = false;
+				}
+			} else {
+				digitIsWorking = false;
+			}
+		} else {
+			digitIsWorking = false;
+		}
 	} catch (err) {
 		digitIsWorking = false;
 	}
 
 	return digitIsWorking;
+}
+
+async function globalWaitServerReady({appUrl}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	}
+
+	let serverIsNotReady = true;
+
+	do {
+		let digitIsWorking = await globalIsDigitWorking({appUrl});
+		if (digitIsWorking) {
+			serverIsNotReady = false;
+		} else {
+			await sleep(10000);
+		}
+	} while (serverIsNotReady);
 }
 
 async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
@@ -1499,6 +1529,11 @@ function DigitApp({appUrl, username, password}) {
 	});
 	this.isDigitWorking = async function() {
 		return await globalIsDigitWorking({
+			appUrl: appUrl
+		});
+	}
+	this.waitServerReady = async function() {
+		return await globalWaitServerReady({
 			appUrl: appUrl
 		});
 	}
