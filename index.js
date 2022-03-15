@@ -787,7 +787,7 @@ async function globalIsDigitWorking({appUrl}) {
 	let digitIsWorking = true;
 
 	try {
-		let monitoringData = await axios.get(appUrl + `rest/monitoring/info`, {
+		let {"data": monitoringData} = await axios.get(appUrl + `rest/monitoring/info`, {
 			//10 seconds
 			timeout: 10000
 		});
