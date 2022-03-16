@@ -788,8 +788,8 @@ async function globalIsDigitWorking({appUrl}) {
 
 	try {
 		let {"data": monitoringData} = await axios.get(appUrl + `rest/monitoring/info`, {
-			//10 seconds
-			timeout: 10000
+			//2 seconds
+			timeout: 2000
 		});
 
 		if (monitoringData) {
