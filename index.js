@@ -1,6 +1,7 @@
 const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 const axiosRetry = require('axios-retry');
+const FormData = require('form-data');
 const {WebSocket} = require("ws");
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -588,6 +589,40 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 	}
 
 	return filePath;
+}
+
+async function globalUploadFile({appUrl, userCookie, filePath}) {
+	async function uploadFileByPath(filePath) {
+		if (!filePath) {
+			throw new Error("filePath is not defined");
+		}
+
+		const form = new FormData();
+		const newFile = fs.createReadStream(filePath);
+		form.append("file", newFile);
+
+		const {"data": fileId} = await axios.post(appUrl + `rest/file/upload`, form, {
+			headers: {
+				"Content-Type": `multipart/form-data; boundary=${form._boundary}`,
+				"Cookie": userCookie
+			},
+			//10 minutes
+			timeout: 600000
+		});
+
+		return fileId;
+	}
+
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!filePath) {
+		throw new Error("filePath is not defined");
+	}
+
+	let fileId = await uploadFileByPath(filePath);
+	return fileId;
 }
 
 async function globalGetFileInfo({appUrl, userCookie, fileId}) {
@@ -1484,6 +1519,14 @@ function DigitApp({appUrl, username, password}) {
 			userCookie,
 			fileId,
 			options
+		});
+	});
+	this.uploadFile = syncResistant(async function(filePath) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalUploadFile({
+			appUrl: appUrl,
+			userCookie,
+			filePath
 		});
 	});
 	this.getFileInfo = syncResistant(async function(fileId) {
