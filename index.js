@@ -7,6 +7,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const dayjs = require('dayjs');
+const _ = require('lodash');
 
 axiosRetry(axios, {
 	"retries": 10,
@@ -884,6 +885,48 @@ async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
 	return executionData;
 }
 
+async function globalCreateProcess({appUrl, userCookie, workflowId, processVariables}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!workflowId) {
+		throw new Error("workflowId is not defined");
+	} else if (processVariables) {
+		if (_.isPlainObject(processVariables)) {
+			// do nothing
+		} else {
+			throw new Error("type of processVariables is not object");
+		}
+	}
+
+	let createProcessObject = {
+		"workflowId": workflowId
+	}
+	if (processVariables) {
+		for (let variableName in processVariables) {
+			if (variableName == "workflowId") {
+				// do nothing, it's not a variable
+			} else {
+				createProcessObject[variableName] = processVariables[variableName];
+			}
+		}
+	}
+	let newProcessObjectId = getGuid();
+	createProcessObject.objectId = newProcessObjectId;
+
+	await axios.post(appUrl + `rest/processes/create`, createProcessObject, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//10 seconds
+		timeout: 10000
+	});
+
+	return newProcessObjectId;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1586,6 +1629,15 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl,
 			userCookie,
 			jsToExecute
+		});
+	});
+	this.createProcess = syncResistant(async function(workflowId, processVariables) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalCreateProcess({
+			appUrl: appUrl,
+			userCookie,
+			workflowId,
+			processVariables
 		});
 	});
 }
