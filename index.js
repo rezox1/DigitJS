@@ -124,8 +124,20 @@ async function globalSaveObject({appUrl, userCookie, objectId, objectData}) {
 }
 
 async function globalDeleteObjects({appUrl, userCookie, deleteObjectIds}) {
-	if (!Array.isArray(deleteObjectIds)) {
-		throw new Error("deleteObjectIds is not Array");
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!deleteObjectIds) {
+		throw new Error("deleteObjectIds is not defined");
+	}
+
+	if (Array.isArray(deleteObjectIds)) {
+		if (deleteObjectIds.length === 0) {
+			throw new Error("length of deleteObjectIds is 0");
+		}
+	} else {
+		throw new Error("type of deleteObjectIds is not array");
 	}
 
 	await axios.post(appUrl + `rest/data/deleteentity`, {
@@ -137,6 +149,22 @@ async function globalDeleteObjects({appUrl, userCookie, deleteObjectIds}) {
 		},
 		//10 minutes
 		timeout: 600000
+	});
+}
+
+async function globalDeleteObject({appUrl, userCookie, deleteObjectId}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!deleteObjectId) {
+		throw new Error("deleteObjectId is not defined");
+	}
+
+	return await globalDeleteObjects({
+		appUrl: appUrl,
+		userCookie,
+		deleteObjectIds: [deleteObjectId]
 	});
 }
 
@@ -1446,9 +1474,17 @@ function DigitApp({appUrl, username, password}) {
 			searchParameters
 		});
 	});
+	this.deleteObject = syncResistant(async function(deleteObjectId) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalDeleteObject({
+			appUrl: appUrl,
+			userCookie,
+			deleteObjectId
+		});
+	});
 	this.deleteObjects = syncResistant(async function(deleteObjectIds) {
 		const userCookie = await CookieManager.getActualCookie();
-		await globalDeleteObjects({
+		return await globalDeleteObjects({
 			appUrl: appUrl,
 			userCookie, 
 			deleteObjectIds
