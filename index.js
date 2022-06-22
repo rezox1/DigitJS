@@ -298,21 +298,21 @@ async function globalGetFacetData({appUrl, userCookie, facetParameters}) {
 		}
 	}
 
-	let reqestBody = {
+	let requestBody = {
 		"grid": gridId
 	}
 	if (searchString) {
-		reqestBody.search = searchString;
+		requestBody.search = searchString;
 	}
 	if (searchPage) {
-		reqestBody.searchPage = searchPage;
-		reqestBody.searchPageName = searchPageName;
+		requestBody.searchPage = searchPage;
+		requestBody.searchPageName = searchPageName;
 	}
 	if (additionalParameters) {
-		Object.assign(reqestBody, additionalParameters);
+		Object.assign(requestBody, additionalParameters);
 	}
 
-	let {"data": facetData} = await axios.post(appUrl + `rest/facetdata`, reqestBody, {
+	let {"data": facetData} = await axios.post(appUrl + `rest/facetdata`, requestBody, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
