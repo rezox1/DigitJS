@@ -267,6 +267,63 @@ async function globalGetObjects({appUrl, userCookie, searchParameters}) {
 	return searchResult.data;
 }
 
+async function globalGetFacetData({appUrl, userCookie, facetParameters}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!facetParameters) {
+		throw new Error("facetParameters is not defined");
+	}
+
+	let gridId = facetParameters.gridId,
+		searchString = facetParameters.searchString,
+		searchPage = facetParameters.searchPage,
+		searchPageName = facetParameters.searchPageName,
+		additionalParameters = facetParameters.additionalParameters;
+
+	if (!gridId) {
+		throw new Error("gridId is not defined");
+	}
+
+	if (searchPage || searchPageName) {
+		if (searchPage) {
+			if (searchPageName) {
+				// do nothing
+			} else {
+				throw new Error("searchPageName is not defined");
+			}
+		} else {
+			throw new Error("searchPage is not defined");
+		}
+	}
+
+	let requestBody = {
+		"grid": gridId
+	}
+	if (searchString) {
+		requestBody.search = searchString;
+	}
+	if (searchPage) {
+		requestBody.searchPage = searchPage;
+		requestBody.searchPageName = searchPageName;
+	}
+	if (additionalParameters) {
+		Object.assign(requestBody, additionalParameters);
+	}
+
+	let {"data": facetData} = await axios.post(appUrl + `rest/facetdata`, requestBody, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+
+	return facetData;
+}
+
 async function globalGetForms({appUrl, userCookie}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1488,6 +1545,14 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl,
 			userCookie, 
 			deleteObjectIds
+		});
+	});
+	this.getFacetData = syncResistant(async function(facetParameters) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalGetFacetData({
+			appUrl: appUrl,
+			userCookie,
+			facetParameters
 		});
 	});
 	this.getForms = syncResistant(async function() {
