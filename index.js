@@ -286,8 +286,8 @@ async function globalGetFacetData({appUrl, userCookie, facetParameters}) {
 		throw new Error("gridId is not defined");
 	}
 
-	if (searchPage || searchPageName) {
-		if (searchPage) {
+	if (searchPage || searchPage === 0 || searchPageName) {
+		if (searchPage || searchPage === 0) {
 			if (searchPageName) {
 				// do nothing
 			} else {
