@@ -8,6 +8,7 @@ const fsPromises = require('fs').promises;
 const path = require('path');
 const dayjs = require('dayjs');
 const _ = require('lodash');
+const sanitize = require("sanitize-filename");
 
 axiosRetry(axios, {
 	"retries": 10,
@@ -630,8 +631,11 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 			throw new Error("newFileName is not defined");
 		}
 
+		let preparedFileName = sanitize(newFileName, {
+			"replacement": "_"
+		});
 		let fileDir = path.dirname(currentFilePath);
-		let newFilePath = fileDir + "/" + newFileName;
+		let newFilePath = fileDir + "/" + preparedFileName;
 		await fsPromises.rename(currentFilePath, newFilePath);
 		return newFilePath;
 	}
