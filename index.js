@@ -953,7 +953,7 @@ async function globalWaitServerReady({appUrl}) {
 	} while (serverIsNotReady);
 }
 
-async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
+async function globalExecuteServerJS({appUrl, userCookie, jsToExecute, requestTimeout}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	} else if (!userCookie) {
@@ -962,13 +962,23 @@ async function globalExecuteServerJS({appUrl, userCookie, jsToExecute}) {
 		throw new Error("jsToExecute is not defined");
 	}
 
+	//60 seconds
+	const DEFAULT_TIMEOUT = 60000;
+
+	if (!requestTimeout) {
+		requestTimeout = DEFAULT_TIMEOUT;
+	} else {
+		if (typeof requestTimeout != "number") {
+			throw new Error("typeof requestTimeout is not number");
+		}
+	}
+
 	const {"data": executionData} = await axios.post(appUrl + `rest/jsapi/execute`, jsToExecute, {
 		headers: {
 			"Content-Type": "application/json;charset=UTF-8",
 			"Cookie": userCookie
 		},
-		//60 seconds
-		timeout: 60000
+		timeout: requestTimeout
 	});
 
 	return executionData;
@@ -1728,12 +1738,13 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl
 		});
 	}
-	this.executeServerJS = syncResistant(async function(jsToExecute) {
+	this.executeServerJS = syncResistant(async function(jsToExecute, requestTimeout) {
 		const userCookie = await CookieManager.getActualCookie();
 		return await globalExecuteServerJS({
 			appUrl: appUrl,
 			userCookie,
-			jsToExecute
+			jsToExecute,
+			requestTimeout
 		});
 	});
 	this.createProcess = syncResistant(async function(workflowId, processVariables) {
