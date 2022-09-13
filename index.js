@@ -687,13 +687,15 @@ async function globalUploadFile({appUrl, userCookie, filePath}) {
 			throw new Error("filePath is not defined");
 		}
 
+		const fileContent = await fsPromises.readFile(filePath);
+		const fileName = path.basename(filePath);
+
 		const form = new FormData();
-		const newFile = fs.createReadStream(filePath);
-		form.append("file", newFile);
+		form.append("file", fileContent, fileName);
 
 		const {"data": fileId} = await axios.post(appUrl + `rest/file/upload`, form, {
 			headers: {
-				"Content-Type": `multipart/form-data; boundary=${form._boundary}`,
+				...form.getHeaders(),
 				"Cookie": userCookie
 			},
 			//10 minutes
