@@ -1028,6 +1028,54 @@ async function globalCreateProcess({appUrl, userCookie, workflowId, processVaria
 	return newProcessObjectId;
 }
 
+async function globalCreateWorklogForJiraIssue({appUrl, userCookie, issueId, worklogData}) {
+	if (!appUrl) {
+		throw new Error("appUrl is not defined");
+	} else if (!userCookie) {
+		throw new Error("userCookie is not defined");
+	} else if (!issueId) {
+		throw new Error("issueId is not defined");
+	} else if (!worklogData) {
+		throw new Error("worklogData is not defined");
+	} else if (!worklogData.startDate) {
+		throw new Error("worklogData.startDate is not defined");
+	} else if (!(worklogData.startDate instanceof Date)) {
+		throw new Error("type of worklogData.startDate is not date");
+	} else if (!worklogData.timeSpentSeconds) {
+		throw new Error("worklogData.timeSpentSeconds is not defined");
+	} else if (typeof worklogData.timeSpentSeconds !== "number") {
+		throw new Error("type of worklogData.timeSpentSeconds is not number");
+	} else if (!worklogData.username) {
+		throw new Error("worklogData.username is not defined");
+	}
+
+	let worklogStartDateDayjs = dayjs(worklogData.startDate);
+	if (!worklogStartDateDayjs.isValid()) {
+		throw new Error("worklogData.startDate is not valid date");
+	}
+
+	let worklogComment = worklogData.comment || "",
+		worklogTimeSpentSeconds = worklogData.timeSpentSeconds,
+		worklogUsername = worklogData.username;
+
+	let worklogStartDateString = worklogStartDateDayjs.format("YYYY-MM-DDTHH:mm:ss.SSSZZ");
+
+	const {"data": resultData} = await axios.post(appUrl + `rest/jira/timeSpent/${issueId}/${worklogUsername}`, {
+		"comment": worklogComment,
+		"started": worklogStartDateString,
+		"timeSpentSeconds": worklogTimeSpentSeconds
+	}, {
+		headers: {
+			"Content-Type": "application/json;charset=UTF-8",
+			"Cookie": userCookie
+		},
+		//60 seconds
+		timeout: 60000
+	});
+
+	return resultData;
+}
+
 async function globalLogin({appUrl, username, password}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
@@ -1756,6 +1804,15 @@ function DigitApp({appUrl, username, password}) {
 			userCookie,
 			workflowId,
 			processVariables
+		});
+	});
+	this.createWorklogForJiraIssue = syncResistant(async function(issueId, worklogData) {
+		const userCookie = await CookieManager.getActualCookie();
+		return await globalCreateWorklogForJiraIssue({
+			appUrl: appUrl,
+			userCookie,
+			issueId,
+			worklogData
 		});
 	});
 }
