@@ -602,7 +602,7 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 		response.data.pipe(writer);
 
 		return new Promise((resolve, reject) => {
-			writer.on('finish', resolve.bind(this, response));
+			writer.on('finish', resolve);
 			writer.on('error', reject);
 		});
 	}
