@@ -2,13 +2,13 @@ const {"v4": getGuid} = require('uuid');
 const axios = require('axios');
 const axiosRetry = require('axios-retry');
 const FormData = require('form-data');
-const {WebSocket} = require("ws");
+const {WebSocket} = require('ws');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const dayjs = require('dayjs');
 const _ = require('lodash');
-const sanitize = require("sanitize-filename");
+const sanitize = require('sanitize-filename');
 
 axiosRetry(axios, {
 	"retries": 10,
