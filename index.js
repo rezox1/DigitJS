@@ -636,7 +636,14 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 		});
 		let fileDir = path.dirname(currentFilePath);
 		let newFilePath = fileDir + "/" + preparedFileName;
+
+		let fileIsAlreadyExist = fs.existsSync(newFilePath);
+		if (fileIsAlreadyExist) {
+			throw new Error("file with path " + newFilePath + " is already exist");
+		}
+
 		await fsPromises.rename(currentFilePath, newFilePath);
+
 		return newFilePath;
 	}
 
@@ -648,17 +655,20 @@ async function globalDownloadFile({appUrl, userCookie, fileId, options}) {
 		throw new Error("fileId is not defined");
 	}
 
+	let tempFileName = fileId + "_" + getGuid();
+
 	let currentDir = process.cwd();
+
 	let filePath;
 	if (options) {
 		let customFileDir = options.fileDir;
 		if (customFileDir) {
-			filePath = path.resolve(currentDir, customFileDir, fileId);
+			filePath = path.resolve(currentDir, customFileDir, tempFileName);
 		} else {
-			filePath = path.resolve(currentDir, fileId);
+			filePath = path.resolve(currentDir, tempFileName);
 		}
 	} else {
-		filePath = path.resolve(currentDir, fileId);
+		filePath = path.resolve(currentDir, tempFileName);
 	}
 
 	let fileUrl = appUrl + 'rest/file/download/' + fileId;
