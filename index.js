@@ -953,6 +953,8 @@ async function globalWaitServerReady({appUrl}) {
 		throw new Error("appUrl is not defined");
 	}
 
+	let serverIsReady = false;
+
 	let serverIsNotReady = true;
 
 	do {
@@ -963,6 +965,14 @@ async function globalWaitServerReady({appUrl}) {
 			await sleep(10000);
 		}
 	} while (serverIsNotReady);
+
+	if (serverIsNotReady) {
+		serverIsReady = false;
+	} else {
+		serverIsReady = true;
+	}
+
+	return serverIsReady;
 }
 
 async function globalExecuteServerJS({appUrl, userCookie, jsToExecute, requestTimeout}) {
