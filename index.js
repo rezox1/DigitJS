@@ -948,12 +948,38 @@ async function globalIsDigitWorking({appUrl}) {
 	return digitIsWorking;
 }
 
-async function globalWaitServerReady({appUrl}) {
+async function globalWaitServerReady({appUrl, options}) {
 	if (!appUrl) {
 		throw new Error("appUrl is not defined");
 	}
 
+	if (options) {
+		if (_.isPlainObject(options)) {
+			if (options.timeout) {
+				if (typeof options.timeout === "number") {
+					if (options.timeout < 0) {
+						throw new Error("options.timeout cannot be less then 0");
+					}
+				} else {
+					throw new Error("type of options.timeout is not number");
+				}
+			}
+		} else {
+			throw new Error("type of options is not object");
+		}
+	}
+
 	let serverIsReady = false;
+
+	let startDate = dayjs();
+
+	let waitTimeout = 0;
+
+	if (options) {
+		if (options.timeout) {
+			waitTimeout = options.timeout;
+		}
+	}
 
 	let serverIsNotReady = true;
 
@@ -962,7 +988,19 @@ async function globalWaitServerReady({appUrl}) {
 		if (digitIsWorking) {
 			serverIsNotReady = false;
 		} else {
-			await sleep(10000);
+			if (waitTimeout) {
+				let currentDate = dayjs();
+
+				let differenceBetweenStartDateAndCurrentDateInMs = currentDate.diff(startDate);
+
+				if (differenceBetweenStartDateAndCurrentDateInMs >= waitTimeout) {
+					break;
+				} else {
+					await sleep(10000);
+				}
+			} else {
+				await sleep(10000);
+			}
 		}
 	} while (serverIsNotReady);
 
@@ -1803,9 +1841,10 @@ function DigitApp({appUrl, username, password}) {
 			appUrl: appUrl
 		});
 	}
-	this.waitServerReady = async function() {
+	this.waitServerReady = async function(options) {
 		return await globalWaitServerReady({
-			appUrl: appUrl
+			appUrl: appUrl,
+			options
 		});
 	}
 	this.executeServerJS = syncResistant(async function(jsToExecute, requestTimeout) {
