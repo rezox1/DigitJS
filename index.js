@@ -964,10 +964,22 @@ async function globalWaitServerReady({appUrl, options}) {
 					throw new Error("type of options.timeout is not number");
 				}
 			}
+
+			if (options.checkInterval) {
+				if (typeof options.checkInterval === "number") {
+					if (options.checkInterval < 1000) {
+						throw new Error("options.checkInterval cannot be less then 1000");
+					}
+				} else {
+					throw new Error("type of options.checkInterval is not number");
+				}
+			}
 		} else {
 			throw new Error("type of options is not object");
 		}
 	}
+
+	const DEFAULT_CHECK_INTERVAL = 10000;
 
 	let serverIsReady = false;
 
@@ -975,9 +987,15 @@ async function globalWaitServerReady({appUrl, options}) {
 
 	let waitTimeout = 0;
 
+	let checkInterval = DEFAULT_CHECK_INTERVAL;
+
 	if (options) {
 		if (options.timeout) {
 			waitTimeout = options.timeout;
+		}
+
+		if (options.checkInterval) {
+			checkInterval = options.checkInterval;
 		}
 	}
 
@@ -996,10 +1014,10 @@ async function globalWaitServerReady({appUrl, options}) {
 				if (differenceBetweenStartDateAndCurrentDateInMs >= waitTimeout) {
 					break;
 				} else {
-					await sleep(10000);
+					await sleep(checkInterval);
 				}
 			} else {
-				await sleep(10000);
+				await sleep(checkInterval);
 			}
 		}
 	} while (serverIsNotReady);
